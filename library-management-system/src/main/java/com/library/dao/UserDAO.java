@@ -67,7 +67,7 @@ public class UserDAO {
         return users;
     }
     
-	private void updateUserBalance(int userId, double amountToAdd) throws Exception {
+    public void updateUserBalance(int userId, double amountToAdd) throws Exception {
         String sql = "UPDATE users SET balance = balance + ? WHERE user_id = ?";
         
         try (Connection conn = DatabaseConnection.connect();

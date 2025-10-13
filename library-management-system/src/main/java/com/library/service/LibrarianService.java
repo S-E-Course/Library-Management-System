@@ -14,7 +14,12 @@ public class LibrarianService {
     public void detectOverdueBooks() throws Exception {
         List<Borrowing> overdueList = borrowingDAO.findOverdueBooks();
         for (Borrowing b : overdueList) {
-            fineDAO.issueFine(b.getBorrowId(), b.getUserId(), 10);
+            boolean success = fineDAO.issueFine(b.getBorrowId(), b.getUserId(), 10);
+            if (success) {
+                System.out.println("Fine issued for borrowId=" + b.getBorrowId());
+            } else {
+                System.out.println("Failed to issue fine for borrowId=" + b.getBorrowId());
+            }
         }
     }
 }
