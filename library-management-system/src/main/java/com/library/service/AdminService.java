@@ -58,4 +58,24 @@ public class AdminService {
         u.setBalance(0.0);
         return userDAO.addUser(u);
     }
+
+	public boolean removeBook(int bookId) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public List<Book> listBooks() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean removeUser(int userId) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	public List<User> listUsers() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
