@@ -11,25 +11,28 @@ public class test {
 	public static void main(String[] args) throws Exception {
 		
 		AdminService a = new AdminService();
+	    UserService u = new UserService();
 		String username = "mosub";
 		String password = "12345";
+		
+		
 		boolean b = a.login(username, password);
-		if(b) {
-			System.out.println("sucsses");
-		}
-		else {
-			System.out.println("failed");
-		}
-		
-		
-		
-		
 		
 		
 		
 		if(a.isLoggedIn()) {
 			System.out.println("Admin Logged In");
+			u = null;
 		}
+		else if(u.login(username, password)) {
+			System.out.println("User Logged In");
+			a = null;
+		}
+		
+		
+		
+		
+		
 		
 		
 		
@@ -65,11 +68,29 @@ public class test {
 		
 		
 	    
-	    UserService u = new UserService();
+
 	    username = "user";
-		password = "123";
-		if(u.login(username, passwordHash)) {
+		password = "12";
+		if(u.login(username, password)) {
 			System.out.println("User Logged In");
+			
+			
+			
+			
+			
+			User user;
+			user = u.getLoggedUser();
+			System.out.println(user.getUsername() + " " + user.getEmail());
+			
+			
+			
+			
+			
+			
+			
+			
+			list = u.searchBooks(author);
+		    System.out.println(list.get(0).getAuthor() + " " +  list.get(0).getTitle());
 		}
 		
 		
@@ -79,20 +100,7 @@ public class test {
 		
 		
 		
-		//u.logout();
-		User user;
-		user = u.getLoggedUser();
-		System.out.println(user.getUsername() + " " + user.getEmail());
-		
-		
-		
-		
-		
-		
-		
-		
-		list = u.searchBooks(author);
-	    System.out.println(list.get(0).getAuthor() + " " +  list.get(0).getTitle());
+
 	    
 	    
 	    
