@@ -95,5 +95,35 @@ public class UserDAO {
         throw new Exception("user not found");
     }
 
+    public User findById(int userId) throws Exception {
+        String sql = "SELECT user_id, username, email, password_hash, role, balance " +
+                     "FROM users WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    User u = new User();
+                    u.setUserId(rs.getInt("user_id"));
+                    u.setUsername(rs.getString("username"));
+                    u.setEmail(rs.getString("email"));
+                    u.setPasswordHash(rs.getString("password_hash"));
+                    u.setRole(rs.getString("role"));
+                    u.setBalance(rs.getDouble("balance"));
+                    return u;
+                }
+            }
+        }
+        return null;
+    }
+	public boolean deleteUser(int userId) throws Exception {
+        String sql = "DELETE FROM users WHERE user_id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
 
 }

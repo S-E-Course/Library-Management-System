@@ -1,6 +1,10 @@
 package com.library.dao;
 
 import com.library.model.Book;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import com.library.util.DatabaseConnection;
 
 import java.sql.*;
@@ -67,5 +71,45 @@ public class BookDAO {
             }
         }
         throw new Exception("book not found");
+    }
+    public List<Book> listAllBooks() throws Exception {
+        String sql = "SELECT book_id, title, author, isbn, available FROM books ORDER BY book_id";
+        List<Book> out = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Book b = new Book();
+                b.setBookId(rs.getInt("book_id"));
+                b.setTitle(rs.getString("title"));
+                b.setAuthor(rs.getString("author"));
+                b.setIsbn(rs.getString("isbn"));
+                b.setAvailable(rs.getBoolean("available"));
+                out.add(b);
+            }
+        }
+        return out;
+    }
+
+    public Book findById(int bookId) throws Exception {
+        String sql = "SELECT book_id, title, author, isbn, available FROM books WHERE book_id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, bookId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Book b = new Book();
+                    b.setBookId(rs.getInt("book_id"));
+                    b.setTitle(rs.getString("title"));
+                    b.setAuthor(rs.getString("author"));
+                    b.setIsbn(rs.getString("isbn"));
+                    b.setAvailable(rs.getBoolean("available"));
+                    return b;
+                }
+            }
+        }
+        return null; 
     }
 }

@@ -1,6 +1,7 @@
 package com.library.dao;
 
 import com.library.model.Borrowing;
+import com.library.model.User;
 import com.library.util.DatabaseConnection;
 
 import java.sql.*;
@@ -11,42 +12,7 @@ public class BorrowingDAO {
     private final UserDAO userDAO = new UserDAO();
     private final BookDAO bookDAO = new BookDAO();
 
-    public boolean borrowBook(int userId, int bookId) throws Exception {
-        double balance = userDAO.getUserBalance(userId);
-        if (balance > 0) {
-            System.out.println("User has unpaid balance and cannot borrow.");
-            return false;
-        }
-
-        boolean available = bookDAO.bookAvailable(bookId);
-        if (!available) {
-            System.out.println("Book is not available.");
-            return false;
-        }
-
-        String sqlBorrow = "INSERT INTO borrowings (user_id, book_id, borrow_date, status) " +
-                "VALUES (?, ?, CURRENT_DATE, 'borrowed')";
-
-        try (Connection conn = DatabaseConnection.connect()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement stmt = conn.prepareStatement(sqlBorrow)) {
-                stmt.setInt(1, userId);
-                stmt.setInt(2, bookId);
-                stmt.executeUpdate();
-
-                if (!bookDAO.setBookStatus(bookId, false)) {
-                    throw new SQLException("Failed to update book status");
-                }
-
-                conn.commit();
-                System.out.println("Book borrowed successfully.");
-                return true;
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            }
-        }
-    }
+    
 
     public List<Borrowing> findOverdueBooks() throws Exception {
         List<Borrowing> list = new ArrayList<>();
@@ -119,6 +85,45 @@ public class BorrowingDAO {
             conn.commit();
             System.out.println("Book returned successfully.");
             return true;
+        }
+    }
+    public boolean borrowBook(int userId, int bookId) throws Exception {
+        String updateBookSql = "UPDATE books SET available = FALSE WHERE book_id = ? AND available = TRUE";
+        String insertBorrowSql =
+            "INSERT INTO borrowings (user_id, book_id, borrow_date, status) " +
+            "VALUES (?, ?, CURRENT_DATE, 'borrowed')";
+
+        try (Connection conn = DatabaseConnection.connect()) {
+            conn.setAutoCommit(false);
+            try {
+                // Step 1: ensure book exists and available
+                int updated;
+                try (PreparedStatement up = conn.prepareStatement(updateBookSql)) {
+                    up.setInt(1, bookId);
+                    updated = up.executeUpdate();
+                }
+                if (updated == 0) {
+                    conn.rollback();
+                    System.out.println("Book is not available or does not exist.");
+                    return false;
+                }
+
+                // Step 2: insert borrowing (without touching generated columns)
+                try (PreparedStatement ins = conn.prepareStatement(insertBorrowSql)) {
+                    ins.setInt(1, userId);
+                    ins.setInt(2, bookId);
+                    ins.executeUpdate();
+                }
+
+                conn.commit();
+                System.out.println("Book borrowed successfully.");
+                return true;
+            } catch (Exception e) {
+                conn.rollback();
+                throw e;
+            } finally {
+                conn.setAutoCommit(true);
+            }
         }
     }
 }

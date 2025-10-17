@@ -1,6 +1,9 @@
+
 package com.library.app;
 
+import com.library.model.User;
 import com.library.service.AdminService;
+import com.library.service.AuthService;
 import com.library.service.LibrarianService;
 import com.library.service.UserService;
 import com.library.util.DatabaseConnection;
@@ -10,91 +13,97 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
         try {
-            // Initialize DB connection once for the app lifetime (optional)
-            try {
-                DatabaseConnection.connect();
-            } catch (Exception e) {
-                System.out.println("Warning: Could not connect to DB at startup. Will try on demand.");
-            }
-
+            DatabaseConnection.connect();
             Scanner in = new Scanner(System.in);
+
             while (true) {
                 MenuPrinter.clear();
-                MenuPrinter.banner("Library Management System - CLI");
-                System.out.println("1) Login as Admin");
-                System.out.println("2) Login as Librarian");
-                System.out.println("3) Login as User");
-                System.out.println("0) Exit");
-                int choice = InputHelper.readInt(in, "Choose: ", 0, 3);
+                MenuPrinter.banner("Library Management System - Login");
 
-                switch (choice) {
-                    case 1: loginAdmin(in);
-                    case 2: loginLibrarian(in);
-                    case 3: loginUser(in);
-                    case 0: {
-                        System.out.println("Goodbye!");
-                        try { DatabaseConnection.disconnect(); } catch (Exception ignored) {}
-                        return;
-                    }
+                String username = InputHelper.readNonEmpty(in, "Username: ");
+                String password = InputHelper.readPassword(in, "Password: ");
+
+                AuthService auth = new AuthService();
+                User found = auth.authenticate(username, password);
+
+                if (found == null) {
+                    System.out.println("Invalid credentials. Try again.");
+                    InputHelper.pressEnterToContinue(in);
+                    continue;
+                }
+
+                String role = found.getRole();
+                if (role == null) {
+                    System.out.println("User has no role assigned.");
+                    InputHelper.pressEnterToContinue(in);
+                    continue;
+                }
+
+                switch (role.toLowerCase()) {
+                    case "admin":
+                        runAdmin(in, username, password);
+                        break;
+                    case "librarian":
+                        runLibrarian(in);
+                        break;
+                    case "user":
+                        runUser(in, username, password);
+                        break;
+                    default:
+                        System.out.println("Unknown role: " + role);
+                        InputHelper.pressEnterToContinue(in);
+                        break;
                 }
             }
         } catch (Throwable t) {
             System.err.println("Fatal error: " + t.getMessage());
             t.printStackTrace();
+        } finally {
+            try { DatabaseConnection.disconnect(); } catch (Exception ignore) {}
         }
     }
 
-    private static void loginAdmin(Scanner in) {
+    private static void runAdmin(Scanner in, String username, String password) {
         AdminService adminService = new AdminService();
-        String username = InputHelper.readNonEmpty(in, "Admin username: ");
-        String password = InputHelper.readPassword(in, "Admin password: ");
         try {
-            if (adminService.login(username, password)) {
-                new AdminCLI(in, adminService).run();
-                adminService.logout();
-            } else {
-                System.out.println("Invalid admin credentials.");
+            if (!adminService.login(username, password)) {
+                System.out.println("Login failed for admin.");
                 InputHelper.pressEnterToContinue(in);
+                return;
             }
+            new AdminCLI(in, adminService).run();
         } catch (Exception e) {
-            System.out.println("Login error: " + e.getMessage());
+            System.out.println("Admin session error: " + e.getMessage());
             InputHelper.pressEnterToContinue(in);
+        } finally {
+            adminService.logout();
         }
     }
 
-    private static void loginLibrarian(Scanner in) {
+    private static void runLibrarian(Scanner in) {
         LibrarianService librarianService = new LibrarianService();
-        String username = InputHelper.readNonEmpty(in, "Librarian username: ");
-        String password = InputHelper.readPassword(in, "Librarian password: ");
         try {
-            if (librarianService.login(username, password)) {
-                new LibrarianCLI(in, librarianService).run();
-                librarianService.logout();
-            } else {
-                System.out.println("Invalid librarian credentials.");
-                InputHelper.pressEnterToContinue(in);
-            }
+            new LibrarianCLI(in, librarianService).run();
         } catch (Exception e) {
-            System.out.println("Login error: " + e.getMessage());
+            System.out.println("Librarian session error: " + e.getMessage());
             InputHelper.pressEnterToContinue(in);
         }
     }
 
-    private static void loginUser(Scanner in) {
+    private static void runUser(Scanner in, String username, String password) {
         UserService userService = new UserService();
-        String username = InputHelper.readNonEmpty(in, "User username: ");
-        String password = InputHelper.readPassword(in, "User password: ");
         try {
-            if (userService.login(username, password)) {
-                new UserCLI(in, userService).run();
-                userService.logout();
-            } else {
-                System.out.println("Invalid user credentials.");
+            if (!userService.login(username, password)) {
+                System.out.println("Login failed for user.");
                 InputHelper.pressEnterToContinue(in);
+                return;
             }
+            new UserCLI(in, userService).run();
         } catch (Exception e) {
-            System.out.println("Login error: " + e.getMessage());
+            System.out.println("User session error: " + e.getMessage());
             InputHelper.pressEnterToContinue(in);
+        } finally {
+            userService.logout();
         }
     }
 }
