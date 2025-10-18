@@ -64,18 +64,16 @@ public class AdminService {
 		return false;
 	}
 
-	public List<Book> listBooks() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<Book> listBooks() throws Exception {
+        return bookDAO.listAllBooks();
 	}
 
-	public boolean removeUser(int userId) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	public boolean removeUser(int userId) throws Exception {
+        return userDAO.deleteUser(userId);
+    }
 
-	public List<User> listUsers() {
-		// TODO Auto-generated method stub
-		return null;
+	public List<User> listUsers() throws Exception {
+        return userDAO.getAllUsers();
+    
 	}
 }

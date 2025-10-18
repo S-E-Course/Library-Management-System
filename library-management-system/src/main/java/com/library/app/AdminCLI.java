@@ -27,17 +27,33 @@ public class AdminCLI {
             System.out.println("5) Remove User");
             System.out.println("6) List Users");
             System.out.println("0) Logout");
+
             int choice = InputHelper.readInt(in, "Choose: ", 0, 6);
 
             try {
                 switch (choice) {
-                    case 1: addBookFlow();
-                    case 2: removeBookFlow();
-                    case 3: listBooksFlow();
-                    case 4: addUserFlow();
-                    case 5: removeUserFlow();
-                    case 6: listUsersFlow();
-                    case 0: { return; }
+                    case 1:
+                        addBookFlow();
+                        break;
+                    case 2:
+                        removeBookFlow();
+                        break;
+                    case 3:
+                        listBooksFlow();
+                        break;
+                    case 4:
+                        addUserFlow();
+                        break;
+                    case 5:
+                        removeUserFlow();
+                        break;
+                    case 6:
+                        listUsersFlow();
+                        break;
+                    case 0:
+                        return; // back to login
+                    default:
+                        break;
                 }
             } catch (Exception e) {
                 System.out.println("Operation failed: " + e.getMessage());
@@ -48,12 +64,12 @@ public class AdminCLI {
 
     private void addBookFlow() throws Exception {
         MenuPrinter.title("Add Book");
-        String title = InputHelper.readNonEmpty(in, "Title: ");
+        String title  = InputHelper.readNonEmpty(in, "Title: ");
         String author = InputHelper.readNonEmpty(in, "Author: ");
-        String isbn = InputHelper.readNonEmpty(in, "ISBN: ");
+        String isbn   = InputHelper.readNonEmpty(in, "ISBN: ");
         boolean ok = admin.addBook(title, author, isbn);
         System.out.println(ok ? "Book added." : "Failed to add book.");
-        InputHelper.pressEnterToContinue(in);
+        InputHelper.pressEnterToContinue(in);  // <- returns to Admin menu after ENTER
     }
 
     private void removeBookFlow() throws Exception {
@@ -66,7 +82,7 @@ public class AdminCLI {
 
     private void listBooksFlow() throws Exception {
         MenuPrinter.title("Books");
-        List<Book> books = admin.listBooks();
+        List<Book> books = admin.listBooks(); // make sure AdminService.listBooks() returns a List<Book>
         if (books == null || books.isEmpty()) {
             System.out.println("(No books)");
         } else {
@@ -82,9 +98,9 @@ public class AdminCLI {
     private void addUserFlow() throws Exception {
         MenuPrinter.title("Add User");
         String username = InputHelper.readNonEmpty(in, "Username: ");
-        String email = InputHelper.readNonEmpty(in, "Email: ");
+        String email    = InputHelper.readNonEmpty(in, "Email: ");
         String password = InputHelper.readPassword(in, "Password (plain/hash): ");
-        String role = InputHelper.readNonEmpty(in, "Role (ADMIN|LIBRARIAN|USER): ").toUpperCase();
+        String role     = InputHelper.readNonEmpty(in, "Role (admin|librarian|user): ").toLowerCase();
         boolean ok = admin.addUser(username, email, password, role);
         System.out.println(ok ? "User added." : "Failed to add user.");
         InputHelper.pressEnterToContinue(in);
@@ -100,7 +116,7 @@ public class AdminCLI {
 
     private void listUsersFlow() throws Exception {
         MenuPrinter.title("Users");
-        List<User> users = admin.listUsers();
+        List<User> users = admin.listUsers();  // make sure AdminService.listUsers() returns a List<User>
         if (users == null || users.isEmpty()) {
             System.out.println("(No users)");
         } else {
