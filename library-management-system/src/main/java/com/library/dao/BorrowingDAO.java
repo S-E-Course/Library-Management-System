@@ -1,7 +1,6 @@
 package com.library.dao;
 
 import com.library.model.Borrowing;
-import com.library.model.User;
 import com.library.util.DatabaseConnection;
 
 import java.sql.*;
@@ -9,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BorrowingDAO {
-    private final UserDAO userDAO = new UserDAO();
     private final BookDAO bookDAO = new BookDAO();
 
     
@@ -62,7 +60,7 @@ public class BorrowingDAO {
                         borrowId = rs.getInt("borrow_id");
                         dueDate = rs.getDate("due_date");
                     } else {
-                        System.out.println("No active borrowing found for this user and book.");
+                        System.out.println("No active borrowing found for this book.");
                         return false;
                     }
                 }
@@ -78,7 +76,7 @@ public class BorrowingDAO {
                 updateStmt.executeUpdate();
             }
 
-            if (!bookDAO.setBookStatus(bookId, true)) {
+            if (!bookDAO.setBookStatus(conn, bookId, true)) {
                 throw new SQLException("Failed to update book availability");
             }
 
@@ -88,7 +86,6 @@ public class BorrowingDAO {
         }
     }
     public boolean borrowBook(int userId, int bookId) throws Exception {
-        String updateBookSql = "UPDATE books SET available = FALSE WHERE book_id = ? AND available = TRUE";
         String insertBorrowSql =
             "INSERT INTO borrowings (user_id, book_id, borrow_date, status) " +
             "VALUES (?, ?, CURRENT_DATE, 'borrowed')";
@@ -96,19 +93,13 @@ public class BorrowingDAO {
         try (Connection conn = DatabaseConnection.connect()) {
             conn.setAutoCommit(false);
             try {
-                // Step 1: ensure book exists and available
-                int updated;
-                try (PreparedStatement up = conn.prepareStatement(updateBookSql)) {
-                    up.setInt(1, bookId);
-                    updated = up.executeUpdate();
-                }
-                if (updated == 0) {
+                boolean updated = bookDAO.setBookStatus(conn, bookId, false);
+                if (!updated) {
                     conn.rollback();
-                    System.out.println("Book is not available or does not exist.");
                     return false;
                 }
-
-                // Step 2: insert borrowing (without touching generated columns)
+                
+                
                 try (PreparedStatement ins = conn.prepareStatement(insertBorrowSql)) {
                     ins.setInt(1, userId);
                     ins.setInt(2, bookId);
@@ -116,7 +107,6 @@ public class BorrowingDAO {
                 }
 
                 conn.commit();
-                System.out.println("Book borrowed successfully.");
                 return true;
             } catch (Exception e) {
                 conn.rollback();

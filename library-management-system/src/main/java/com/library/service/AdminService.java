@@ -59,9 +59,13 @@ public class AdminService {
         return userDAO.addUser(u);
     }
 
-	public boolean removeBook(int bookId) {
-		// TODO Auto-generated method stub
-		return false;
+	public boolean removeBook(int bookId) throws Exception {
+		if (loggedAdmin == null) throw new IllegalStateException("Admin not logged in");
+		if(!bookDAO.bookAvailable(bookId)){
+			System.out.println("Book is currently borrowed.");
+			return false;
+		}
+		return bookDAO.removeBook(bookId);
 	}
 
 	public List<Book> listBooks() throws Exception {

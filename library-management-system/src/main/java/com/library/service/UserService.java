@@ -30,7 +30,6 @@ public class UserService {
 
     public boolean borrowBook(int bookId) throws Exception {
         if (loggedUser == null) throw new IllegalStateException("User not logged in.");
-        // 1) validate book exists and available
         Book b = bookDAO.findById(bookId);
         if (b == null) {
             System.out.println("Book does not exist.");
@@ -40,8 +39,11 @@ public class UserService {
             System.out.println("Book is already borrowed.");
             return false;
         }
-
-        // 2) perform borrowing (with availability update) atomically
+        double balance = userDAO.getUserBalance(loggedUser.getUserId());
+        if (balance > 0) {
+            System.out.println("User has unpaid balance and cannot borrow.");
+            return false;
+        }
         return borrowingDAO.borrowBook(loggedUser.getUserId(), bookId);
     }
     

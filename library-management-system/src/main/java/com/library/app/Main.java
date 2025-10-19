@@ -1,3 +1,5 @@
+package com.library.app;
+
 import com.library.model.User;
 import com.library.service.AdminService;
 import com.library.service.AuthService;
@@ -103,4 +105,5 @@ public class Main {
             userService.logout();
         }
     }
+}
 

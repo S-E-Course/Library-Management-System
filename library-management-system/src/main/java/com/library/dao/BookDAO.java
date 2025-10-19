@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import com.library.util.DatabaseConnection;
 
-import java.sql.*;
-import java.util.*;
-
 public class BookDAO {
 
     public boolean addBook(Book book) throws Exception {
@@ -19,6 +16,15 @@ public class BookDAO {
             stmt.setString(1, book.getTitle());
             stmt.setString(2, book.getAuthor());
             stmt.setString(3, book.getIsbn());
+            return stmt.executeUpdate() > 0;
+        }
+    }
+    
+    public boolean removeBook(int bookId) throws Exception {
+        String sql = "DELETE FROM books WHERE book_id = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, bookId);
             return stmt.executeUpdate() > 0;
         }
     }
@@ -47,15 +53,15 @@ public class BookDAO {
         return results;
     }
     
-    public boolean setBookStatus(int bookId, boolean available) throws Exception {
+    public boolean setBookStatus(Connection conn, int bookId, boolean available) throws Exception {
         String sql = "UPDATE books SET available = ? WHERE book_id = ?";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setBoolean(1, available);
             stmt.setInt(2, bookId);
             return stmt.executeUpdate() > 0;
         }
     }
+
     
     public boolean bookAvailable(int bookId) throws Exception {
         String sql = "SELECT available FROM books WHERE book_id = ?";
@@ -72,6 +78,7 @@ public class BookDAO {
         }
         throw new Exception("book not found");
     }
+    
     public List<Book> listAllBooks() throws Exception {
         String sql = "SELECT book_id, title, author, isbn, available FROM books ORDER BY book_id";
         List<Book> out = new ArrayList<>();

@@ -18,18 +18,39 @@ public class FineDAO {
     }
 
     public boolean payFine(int fineId, int userId, double amount) throws Exception {
-    	String sql =
-    		    "UPDATE fines " +
-    		    "SET amount = amount - ?, paid = (amount - ?) <= 0 " +
-    		    "WHERE fine_id = ? AND user_id = ?";
+        String updateSql = "UPDATE fines SET amount = ?, paid = ? WHERE fine_id = ? AND user_id = ?";
 
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setDouble(1, amount);
-            stmt.setDouble(2, amount);
-            stmt.setInt(3, fineId);
-            stmt.setInt(4, userId);
-            return stmt.executeUpdate() > 0;
+        try (Connection conn = DatabaseConnection.connect()) {
+            double fineAmount = getFineAmount(conn, fineId, userId);
+
+            double payment = Math.min(amount, fineAmount);
+            double newAmount = fineAmount - payment;
+            boolean paid = newAmount <= 0;
+
+            try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
+                stmt.setDouble(1, newAmount);
+                stmt.setBoolean(2, paid);
+                stmt.setInt(3, fineId);
+                stmt.setInt(4, userId);
+                return stmt.executeUpdate() > 0;
+            }
         }
     }
+
+    
+    public double getFineAmount(Connection conn, int fineId, int userId) throws SQLException {
+        String sql = "SELECT amount FROM fines WHERE fine_id = ? AND user_id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, fineId);
+            stmt.setInt(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("amount");
+                } else {
+                    throw new SQLException("Fine not found.");
+                }
+            }
+        }
+    }
+
 }
