@@ -9,6 +9,7 @@ import java.util.List;
 
 public class BorrowingDAO {
     private final BookDAO bookDAO = new BookDAO();
+    private final FineDAO fineDAO = new FineDAO();
 
     
 
@@ -38,53 +39,70 @@ public class BorrowingDAO {
         return list;
     }
 
-    
-    public boolean returnBook(int userId, int bookId) throws Exception {
-        String selectSql = "SELECT borrow_id, status, due_date FROM borrowings " +
-                           "WHERE user_id = ? AND book_id = ? AND status = 'borrowed'";
+    public Borrowing findActiveBorrowing(Connection conn, int userId, int bookId) throws Exception {
+        String sql = "SELECT borrow_id, status, due_date FROM borrowings " +
+                     "WHERE user_id = ? AND book_id = ? AND status = 'borrowed'";
 
-        String updateSql = "UPDATE borrowings SET status = 'returned', return_date = CURRENT_DATE " +
-                           "WHERE borrow_id = ?";
-
-        try (Connection conn = DatabaseConnection.connect()) {
-            conn.setAutoCommit(false);
-
-            int borrowId;
-            Date dueDate;
-
-            try (PreparedStatement stmt = conn.prepareStatement(selectSql)) {
-                stmt.setInt(1, userId);
-                stmt.setInt(2, bookId);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    if (rs.next()) {
-                        borrowId = rs.getInt("borrow_id");
-                        dueDate = rs.getDate("due_date");
-                    } else {
-                        System.out.println("No active borrowing found for this book.");
-                        return false;
-                    }
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, bookId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Borrowing b = new Borrowing();
+                    b.setBorrowId(rs.getInt("borrow_id"));
+                    b.setStatus(rs.getString("status"));
+                    b.setDueDate(rs.getDate("due_date").toLocalDate());
+                    b.setUserId(userId);
+                    b.setBookId(bookId);
+                    return b;
                 }
             }
+        }
+        return null;
+    }
 
-            if (dueDate.toLocalDate().isBefore(java.time.LocalDate.now())) {
-                System.out.println("Book is overdue and cannot be returned normally.");
-                return false;
-            }
-
-            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
-                updateStmt.setInt(1, borrowId);
-                updateStmt.executeUpdate();
-            }
-
-            if (!bookDAO.setBookStatus(conn, bookId, true)) {
-                throw new SQLException("Failed to update book availability");
-            }
-
-            conn.commit();
-            System.out.println("Book returned successfully.");
-            return true;
+    
+    public boolean returnBook(int userId, int bookId) throws Exception {
+        try (Connection conn = DatabaseConnection.connect()) {
+        	conn.setAutoCommit(false);
+	        try {
+	        	
+	            Borrowing borrowing = findActiveBorrowing(conn, userId, bookId);
+	            if (borrowing == null) {
+	                System.out.println("No active borrowing found for this book.");
+	                return false;
+	            }
+	            
+	
+	            if (borrowing.isOverdue()) {
+	                Boolean paid = fineDAO.isPaid(conn, borrowing.getBorrowId());
+	                if (paid == null || !paid) {
+	                    System.out.println("Book is overdue and has an unpaid fine.");
+	                    conn.rollback();
+	                    return false;
+	                }
+	            }
+	
+	            String updateSql = "UPDATE borrowings SET status = 'returned', return_date = CURRENT_DATE WHERE borrow_id = ?";
+	            try (PreparedStatement updateStmt = conn.prepareStatement(updateSql)) {
+	                updateStmt.setInt(1, borrowing.getBorrowId());
+	                updateStmt.executeUpdate();
+	            }
+	
+	            if (!bookDAO.setBookStatus(conn, bookId, true)) {
+	                throw new SQLException("Failed to update book availability");
+	            }
+	
+	            conn.commit();
+	            return true;
+	        } catch (Exception e) {
+	            conn.rollback();
+	            throw e;
+	        }
         }
     }
+
+
     public boolean borrowBook(int userId, int bookId) throws Exception {
         String insertBorrowSql =
             "INSERT INTO borrowings (user_id, book_id, borrow_date, status) " +
@@ -111,8 +129,6 @@ public class BorrowingDAO {
             } catch (Exception e) {
                 conn.rollback();
                 throw e;
-            } finally {
-                conn.setAutoCommit(true);
             }
         }
     }

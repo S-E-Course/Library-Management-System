@@ -52,5 +52,19 @@ public class FineDAO {
             }
         }
     }
+    
+    public Boolean isPaid(Connection conn, int borrowId) throws Exception {
+        String sql = "SELECT paid FROM fines WHERE borrow_id = ?";
+        
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, borrowId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getBoolean("paid");
+                }
+            }
+        }
+        return null;
+    }
 
 }

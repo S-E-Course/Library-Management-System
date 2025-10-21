@@ -49,6 +49,7 @@ public class UserService {
     
     public boolean returnBook(int bookId) throws Exception {
         if (loggedUser == null) throw new IllegalStateException("User not logged in");
+        
         return borrowingDAO.returnBook(loggedUser.getUserId(), bookId);
     }
 

@@ -67,6 +67,11 @@ public class Borrowing {
     public void setStatus(String status) {
         this.status = status;
     }
+    
+    public boolean isOverdue() {
+        if (dueDate == null) return false;
+        return dueDate.isBefore(java.time.LocalDate.now());
+    }
 
     public String toString() {
         return "Borrowing{" +
