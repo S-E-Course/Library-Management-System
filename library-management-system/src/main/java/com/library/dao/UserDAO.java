@@ -42,6 +42,12 @@ public class UserDAO {
             stmt.setDouble(5, user.getBalance());
             return stmt.executeUpdate() > 0;     //Execute INSERT/UPDATE/DELETE
             									 //Gets the number of rows affected (0 if no rows inserted, 1 if successful)
+        } catch (SQLException e) {
+            if (e.getSQLState().equals("23505")) {
+                System.out.println("Username or email already exists.");
+                return false;
+            }
+            throw e;
         }
     }
     

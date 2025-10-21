@@ -3,6 +3,7 @@ package com.library.app;
 import com.library.model.Book;
 import com.library.model.User;
 import com.library.service.AdminService;
+import com.library.util.ValidationHelper;
 
 import java.util.List;
 import java.util.Scanner;
@@ -101,10 +102,21 @@ public class AdminCLI {
         String email    = InputHelper.readNonEmpty(in, "Email: ");
         String password = InputHelper.readPassword(in, "Password (plain/hash): ");
         String role     = InputHelper.readNonEmpty(in, "Role (admin|librarian|user): ").toLowerCase();
+        if (!ValidationHelper.isValidEmail(email)) {
+            System.out.println("Invalid email format.");
+            InputHelper.pressEnterToContinue(in);
+            return;
+        }
+        if (!ValidationHelper.isValidRole(role)) {
+            System.out.println("Invalid role. Must be admin, librarian, or user.");
+            InputHelper.pressEnterToContinue(in);
+            return;
+        }
         boolean ok = admin.addUser(username, email, password, role);
         System.out.println(ok ? "User added." : "Failed to add user.");
         InputHelper.pressEnterToContinue(in);
     }
+
 
     private void removeUserFlow() throws Exception {
         MenuPrinter.title("Remove User");
