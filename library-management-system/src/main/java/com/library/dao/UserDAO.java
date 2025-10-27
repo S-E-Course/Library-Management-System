@@ -1,18 +1,16 @@
 package com.library.dao;
 
 import com.library.model.User;
-import com.library.util.DatabaseConnection;
 
 import java.sql.*;
 import java.util.*;
 
 public class UserDAO {
 
-    public User findByUsername(String username) throws Exception {
+    public User findByUsername(Connection conn, String username) throws Exception {
         String sql = "SELECT * FROM users WHERE username = ?";
-        try (Connection conn = DatabaseConnection.connect();      //try do Automatic resource management - closes connections even if exceptions occur
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {     //try do Automatic resource management - closes connections even if exceptions occur
         														  //so i don't need Manual close connections
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();     //Execute SELECT queries
@@ -30,10 +28,9 @@ public class UserDAO {
         return null;
     }
 
-    public boolean addUser(User user) throws Exception {
+    public boolean addUser(Connection conn, User user) throws Exception {
         String sql = "INSERT INTO users (username, email, password_hash, role, balance) VALUES (?, ?, ?, ?, ?)";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, user.getUsername());
             stmt.setString(2, user.getEmail());
@@ -51,12 +48,11 @@ public class UserDAO {
         }
     }
     
-    public List<User> getAllUsers() throws Exception {
+    public List<User> getAllUsers(Connection conn) throws Exception {
         String sql = "SELECT * FROM users ORDER BY user_id";
         List<User> users = new ArrayList<>();
         
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+        try (PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -73,11 +69,10 @@ public class UserDAO {
         return users;
     }
     
-    public void updateUserBalance(int userId, double amountToAdd) throws Exception {
+    public void updateUserBalance(Connection conn, int userId, double amountToAdd) throws Exception {
         String sql = "UPDATE users SET balance = balance + ? WHERE user_id = ?";
         
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setDouble(1, amountToAdd);
             stmt.setInt(2, userId);
@@ -85,11 +80,10 @@ public class UserDAO {
         }
     }
     
-    public double getUserBalance(int userId) throws Exception {
+    public double getUserBalance(Connection conn, int userId) throws Exception {
         String sql = "SELECT balance FROM users WHERE user_id = ?";
         
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
@@ -101,11 +95,10 @@ public class UserDAO {
         throw new Exception("user not found");
     }
 
-    public User findById(int userId) throws Exception {
+    public User findById(Connection conn, int userId) throws Exception {
         String sql = "SELECT user_id, username, email, password_hash, role, balance " +
                      "FROM users WHERE user_id = ?";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -122,10 +115,9 @@ public class UserDAO {
         }
         return null;
     }
-	public boolean deleteUser(int userId) throws Exception {
+	public boolean deleteUser(Connection conn, int userId) throws Exception {
         String sql = "DELETE FROM users WHERE user_id = ?";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             return ps.executeUpdate() > 0;
         }

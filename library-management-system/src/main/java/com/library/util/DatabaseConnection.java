@@ -36,7 +36,6 @@ public class DatabaseConnection {
     public static void disconnect() throws SQLException {
         if (connection != null && !connection.isClosed()) {
             connection.close();
-            System.out.println("Disconnected from DB.");
         }
     }
 }

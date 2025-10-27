@@ -5,14 +5,12 @@ import com.library.model.Book;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import com.library.util.DatabaseConnection;
 
 public class BookDAO {
 
-    public boolean addBook(Book book) throws Exception {
+    public boolean addBook(Connection conn, Book book) throws Exception {
         String sql = "INSERT INTO books (title, author, isbn, available) VALUES (?, ?, ?, TRUE)";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, book.getTitle());
             stmt.setString(2, book.getAuthor());
             stmt.setString(3, book.getIsbn());
@@ -20,20 +18,18 @@ public class BookDAO {
         }
     }
     
-    public boolean removeBook(int bookId) throws Exception {
+    public boolean removeBook(Connection conn, int bookId) throws Exception {
         String sql = "DELETE FROM books WHERE book_id = ?";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, bookId);
             return stmt.executeUpdate() > 0;
         }
     }
     
-    public List<Book> searchBooks(String keyword) throws Exception {
+    public List<Book> searchBooks(Connection conn, String keyword) throws Exception {
         List<Book> results = new ArrayList<>();
         String sql = "SELECT * FROM books WHERE title ILIKE ? OR author ILIKE ? OR isbn ILIKE ?";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             String like = "%" + keyword + "%";
             stmt.setString(1, like);
             stmt.setString(2, like);
@@ -63,11 +59,10 @@ public class BookDAO {
     }
 
     
-    public boolean bookAvailable(int bookId) throws Exception {
+    public boolean bookAvailable(Connection conn, int bookId) throws Exception {
         String sql = "SELECT available FROM books WHERE book_id = ?";
         
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, bookId);
             ResultSet rs = stmt.executeQuery();
@@ -79,12 +74,11 @@ public class BookDAO {
         throw new Exception("book not found");
     }
     
-    public List<Book> listAllBooks() throws Exception {
+    public List<Book> listAllBooks(Connection conn) throws Exception {
         String sql = "SELECT book_id, title, author, isbn, available FROM books ORDER BY book_id";
         List<Book> out = new ArrayList<>();
 
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement ps = conn.prepareStatement(sql);
+        try (PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -100,10 +94,9 @@ public class BookDAO {
         return out;
     }
 
-    public Book findById(int bookId) throws Exception {
+    public Book findById(Connection conn, int bookId) throws Exception {
         String sql = "SELECT book_id, title, author, isbn, available FROM books WHERE book_id = ?";
-        try (Connection conn = DatabaseConnection.connect();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, bookId);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {

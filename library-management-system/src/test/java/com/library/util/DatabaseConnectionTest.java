@@ -44,6 +44,7 @@ class DatabaseConnectionTest {
         assertThat("Should return the same connection instance when connection isClosed", secondConnection, sameInstance(connection));
         secondConnection = null;
     }
+
     
     @Test
     @org.junit.jupiter.api.Order(3)

@@ -1,7 +1,6 @@
 package com.library.dao;
 
 import com.library.model.Borrowing;
-import com.library.util.DatabaseConnection;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -13,14 +12,13 @@ public class BorrowingDAO {
 
     
 
-    public List<Borrowing> findOverdueBooks() throws Exception {
+    public List<Borrowing> findOverdueBooks(Connection conn) throws Exception {
         List<Borrowing> list = new ArrayList<>();
         String sql = "SELECT * FROM borrowings " +
                      "WHERE (status = 'borrowed' AND due_date < CURRENT_DATE) " +
                      "OR (status = 'returned' AND return_date > due_date)";
 
-        try (Connection conn = DatabaseConnection.connect();
-             Statement stmt = conn.createStatement();
+        try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
@@ -62,8 +60,7 @@ public class BorrowingDAO {
     }
 
     
-    public boolean returnBook(int userId, int bookId) throws Exception {
-        try (Connection conn = DatabaseConnection.connect()) {
+    public boolean returnBook(Connection conn, int userId, int bookId) throws Exception {
         	conn.setAutoCommit(false);
 	        try {
 	        	
@@ -99,16 +96,14 @@ public class BorrowingDAO {
 	            conn.rollback();
 	            throw e;
 	        }
-        }
     }
 
 
-    public boolean borrowBook(int userId, int bookId) throws Exception {
+    public boolean borrowBook(Connection conn, int userId, int bookId) throws Exception {
         String insertBorrowSql =
             "INSERT INTO borrowings (user_id, book_id, borrow_date, status) " +
             "VALUES (?, ?, CURRENT_DATE, 'borrowed')";
 
-        try (Connection conn = DatabaseConnection.connect()) {
             conn.setAutoCommit(false);
             try {
                 boolean updated = bookDAO.setBookStatus(conn, bookId, false);
@@ -130,6 +125,5 @@ public class BorrowingDAO {
                 conn.rollback();
                 throw e;
             }
-        }
     }
 }

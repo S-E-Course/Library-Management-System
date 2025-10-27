@@ -62,7 +62,7 @@ public class Main {
         }
     }
 
-    private static void runAdmin(Scanner in, String username, String password) {
+    private static void runAdmin(Scanner in, String username, String password) throws Exception {
         AdminService adminService = new AdminService();
         try {
             if (!adminService.login(username, password)) {
@@ -79,7 +79,7 @@ public class Main {
         }
     }
 
-    private static void runLibrarian(Scanner in) {
+    private static void runLibrarian(Scanner in) throws Exception {
         LibrarianService librarianService = new LibrarianService();
         try {
             new LibrarianCLI(in, librarianService).run();
@@ -89,7 +89,7 @@ public class Main {
         }
     }
 
-    private static void runUser(Scanner in, String username, String password) {
+    private static void runUser(Scanner in, String username, String password) throws Exception {
         UserService userService = new UserService();
         try {
             if (!userService.login(username, password)) {

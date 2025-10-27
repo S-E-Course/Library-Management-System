@@ -4,17 +4,26 @@ import com.library.dao.UserDAO;
 import com.library.dao.BookDAO;
 import com.library.model.Book;
 import com.library.model.User;
+import com.library.util.DatabaseConnection;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 public class AdminService {
+	Connection conn;
     private final UserDAO userDAO = new UserDAO();
     private final BookDAO bookDAO = new BookDAO();
     private User loggedAdmin;
+    
+    
+    public AdminService() throws Exception {
+        this.conn = DatabaseConnection.connect();
+    }
 
     // US1.1 - Login
     public boolean login(String username, String passwordHash) throws Exception {
-        User admin = userDAO.findByUsername(username);
+        User admin = userDAO.findByUsername(conn, username);
         if (admin != null && admin.getPasswordHash().equals(passwordHash)
                 && admin.getRole().equals("admin")) {
             loggedAdmin = admin;
@@ -24,8 +33,9 @@ public class AdminService {
     }
 
     // US1.2 - Logout
-    public void logout() {
+    public void logout() throws SQLException {
         loggedAdmin = null;
+        DatabaseConnection.disconnect();
     }
 
     public boolean isLoggedIn() {
@@ -39,12 +49,12 @@ public class AdminService {
         b.setTitle(title);
         b.setAuthor(author);
         b.setIsbn(isbn);
-        return bookDAO.addBook(b);
+        return bookDAO.addBook(conn, b);
     }
 
     // US1.4 - Search Book
     public List<Book> searchBooks(String keyword) throws Exception {
-        return bookDAO.searchBooks(keyword);
+        return bookDAO.searchBooks(conn, keyword);
     }
 
     // Add user
@@ -56,28 +66,28 @@ public class AdminService {
         u.setPasswordHash(passwordHash);
         u.setRole(role);
         u.setBalance(0.0);
-        return userDAO.addUser(u);
+        return userDAO.addUser(conn, u);
     }
 
 	public boolean removeBook(int bookId) throws Exception {
 		if (loggedAdmin == null) throw new IllegalStateException("Admin not logged in");
-		if(!bookDAO.bookAvailable(bookId)){
+		if(!bookDAO.bookAvailable(conn, bookId)){
 			System.out.println("Book is currently borrowed.");
 			return false;
 		}
-		return bookDAO.removeBook(bookId);
+		return bookDAO.removeBook(conn, bookId);
 	}
 
 	public List<Book> listBooks() throws Exception {
-        return bookDAO.listAllBooks();
+        return bookDAO.listAllBooks(conn);
 	}
 
 	public boolean removeUser(int userId) throws Exception {
-        return userDAO.deleteUser(userId);
+        return userDAO.deleteUser(conn, userId);
     }
 
 	public List<User> listUsers() throws Exception {
-        return userDAO.getAllUsers();
+        return userDAO.getAllUsers(conn);
     
 	}
 }
