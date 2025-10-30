@@ -69,12 +69,12 @@ public class UserDAO {
         return users;
     }
     
-    public void updateUserBalance(Connection conn, int userId, double amountToAdd) throws Exception {
+    public void updateUserBalance(Connection conn, int userId, double amount) throws Exception {
         String sql = "UPDATE users SET balance = balance + ? WHERE user_id = ?";
         
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDouble(1, amountToAdd);
+            stmt.setDouble(1, amount);
             stmt.setInt(2, userId);
             stmt.executeUpdate();
         }

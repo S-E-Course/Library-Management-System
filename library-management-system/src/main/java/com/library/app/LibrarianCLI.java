@@ -40,7 +40,7 @@ public class LibrarianCLI {
 
     private void detectOverdueFlow() throws Exception {
         MenuPrinter.title("Detect Overdue & Issue Fines");
-        librarian.detectOverdueBooks();
+        librarian.detectOverdueMedia();
         InputHelper.pressEnterToContinue(in);
     }
 }

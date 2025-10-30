@@ -1,93 +1,169 @@
 package com.library.service;
 
-import com.library.dao.UserDAO;
-import com.library.dao.BookDAO;
-import com.library.model.Book;
-import com.library.model.User;
+import com.library.dao.*;
+import com.library.model.*;
 import com.library.util.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
+
 public class AdminService {
-	Connection conn;
+
+    private final Connection conn;
     private final UserDAO userDAO = new UserDAO();
-    private final BookDAO bookDAO = new BookDAO();
+    private final MediaDAO mediaDAO = new MediaDAO();
     private User loggedAdmin;
-    
-    
+
+    /**
+     * Initializes a new AdminService with a database connection.
+     *
+     * @throws Exception if a database connection cannot be open
+     */
     public AdminService() throws Exception {
         this.conn = DatabaseConnection.connect();
     }
 
-    // US1.1 - Login
+    /**
+     * Logs in an administrator with a given username and password hash.
+     * @param username     the admin’s username
+     * @param passwordHash the hashed password
+     * @return true if login was successful
+     * @throws Exception if a database error occurs
+     */
     public boolean login(String username, String passwordHash) throws Exception {
         User admin = userDAO.findByUsername(conn, username);
-        if (admin != null && admin.getPasswordHash().equals(passwordHash)
-                && admin.getRole().equals("admin")) {
+        if (admin != null && admin.getPasswordHash().equals(passwordHash)) {
             loggedAdmin = admin;
             return true;
         }
         return false;
     }
 
-    // US1.2 - Logout
+    /**
+     * Logs out the currently logged in administrator
+     * and disconnects from the database.
+     * @throws SQLException if an error occurs while closing the connection
+     */
     public void logout() throws SQLException {
         loggedAdmin = null;
         DatabaseConnection.disconnect();
     }
 
+    /**
+     * Checks if an admin is currently logged in.
+     * @return true if an admin is logged in
+     */
     public boolean isLoggedIn() {
         return loggedAdmin != null;
     }
 
-    // US1.3 - Add Book
-    public boolean addBook(String title, String author, String isbn) throws Exception {
-        if (loggedAdmin == null) throw new IllegalStateException("Admin not logged in");
-        Book b = new Book();
-        b.setTitle(title);
-        b.setAuthor(author);
-        b.setIsbn(isbn);
-        return bookDAO.addBook(conn, b);
+    /**
+     * Adds a new media item (Book, CD, or Journal) to the library database.
+     * @param media the media object to add
+     * @return true if the operation was successful
+     * @throws Exception if an error occurs or admin is not logged in
+     */
+    public boolean addMedia(Media media) throws Exception {
+        if (loggedAdmin == null)
+            throw new IllegalStateException("Admin not logged in");
+        return mediaDAO.addMedia(conn, media);
     }
 
-    // US1.4 - Search Book
-    public List<Book> searchBooks(String keyword) throws Exception {
-        return bookDAO.searchBooks(conn, keyword);
+    /**
+     * Searches for media records by keyword and type.
+     * @param keyword the keyword to search in title, author, or ISBN
+     * @param type    media type filter ("book", "cd", "journal", or "media" for all)
+     * @return a list of matching media items
+     * @throws Exception if a database error occurs
+     */
+    public List<Media> searchMedia(String keyword, String type) throws Exception {
+        return mediaDAO.searchMedia(conn, keyword, type);
     }
 
-    // Add user
+    /**
+     * Removes a media item if it is available.
+     * @param mediaId the ID of the media item to remove
+     * @return true if the media was removed, false if it is borrowed
+     * @throws Exception if a database error occurs or admin not logged in
+     */
+    public boolean removeMedia(int mediaId) throws Exception {
+        if (loggedAdmin == null)
+            throw new IllegalStateException("Admin not logged in");
+        if (!mediaDAO.mediaAvailable(conn, mediaId)) {
+            System.out.println("Media is currently borrowed.");
+            return false;
+        }
+        return mediaDAO.removeMedia(conn, mediaId);
+    }
+
+    /**
+     * Lists all media items of a given type.
+     * @param type media type filter ("book", "cd", "journal", or "media" for all)
+     * @return list of media items
+     * @throws Exception if a database error occurs
+     */
+    public List<Media> listAllMedia(String type) throws Exception {
+        return mediaDAO.listAllMedia(conn, type);
+    }
+
+    /**
+     * Adds a new user to the system.
+     * @param username     username of the new user
+     * @param email        email address
+     * @param passwordHash hashed password
+     * @param role         user role ("admin", "librarian", "user")
+     * @return true if successfully added
+     * @throws Exception if admin not logged in or a database error occurs
+     */
     public boolean addUser(String username, String email, String passwordHash, String role) throws Exception {
-        if (loggedAdmin == null) throw new IllegalStateException("Admin not logged in");
+        if (loggedAdmin == null)
+            throw new IllegalStateException("Admin not logged in");
+
         User u = new User();
         u.setUsername(username);
         u.setEmail(email);
         u.setPasswordHash(passwordHash);
         u.setRole(role);
         u.setBalance(0.0);
+
         return userDAO.addUser(conn, u);
     }
 
-	public boolean removeBook(int bookId) throws Exception {
-		if (loggedAdmin == null) throw new IllegalStateException("Admin not logged in");
-		if(!bookDAO.bookAvailable(conn, bookId)){
-			System.out.println("Book is currently borrowed.");
-			return false;
-		}
-		return bookDAO.removeBook(conn, bookId);
-	}
-
-	public List<Book> listBooks() throws Exception {
-        return bookDAO.listAllBooks(conn);
-	}
-
-	public boolean removeUser(int userId) throws Exception {
+    /**
+     * Deletes a user account by ID.
+     * @param userId ID of the user to remove
+     * @return true if the user was successfully deleted
+     * @throws Exception if admin not logged in or a database error occurs
+     */
+    public boolean removeUser(int userId) throws Exception {
+        if (loggedAdmin == null)
+            throw new IllegalStateException("Admin not logged in");
+        
+        if(userDAO.getUserBalance(conn, userId) > 0) {
+        	System.out.println("User has unpaid balance.");
+        	return false;
+        }
+        
+        List<Media> medialist = mediaDAO.findActiveMedia(conn, userId);
+        if(medialist != null && !medialist.isEmpty()) {
+            for(Media m : medialist) {
+            	mediaDAO.setMediaStatus(conn, m.getId(), true);
+            }
+        }
+        
         return userDAO.deleteUser(conn, userId);
     }
 
-	public List<User> listUsers() throws Exception {
+    /**
+     * gives a list of all users in the system.
+     * @return list of user objects
+     * @throws Exception if admin not logged in or a database error occurs
+     */
+    public List<User> listUsers() throws Exception {
+        if (loggedAdmin == null)
+            throw new IllegalStateException("Admin not logged in");
         return userDAO.getAllUsers(conn);
-    
-	}
+    }
 }

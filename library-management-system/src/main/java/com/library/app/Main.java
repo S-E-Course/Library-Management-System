@@ -43,7 +43,7 @@ public class Main {
                         runAdmin(in, username, password);
                         break;
                     case "librarian":
-                        runLibrarian(in);
+                        runLibrarian(in, username, password);
                         break;
                     case "user":
                         runUser(in, username, password);
@@ -79,13 +79,20 @@ public class Main {
         }
     }
 
-    private static void runLibrarian(Scanner in) throws Exception {
+    private static void runLibrarian(Scanner in, String username, String password) throws Exception {
         LibrarianService librarianService = new LibrarianService();
         try {
+        	if (!librarianService.login(username, password)) {
+                System.out.println("Login failed for admin.");
+                InputHelper.pressEnterToContinue(in);
+                return;
+        	}
             new LibrarianCLI(in, librarianService).run();
         } catch (Exception e) {
             System.out.println("Librarian session error: " + e.getMessage());
             InputHelper.pressEnterToContinue(in);
+        } finally {
+        	librarianService.logout();
         }
     }
 

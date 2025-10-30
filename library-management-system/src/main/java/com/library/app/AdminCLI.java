@@ -1,8 +1,9 @@
 package com.library.app;
 
-import com.library.model.Book;
+import com.library.model.*;
 import com.library.model.User;
 import com.library.service.AdminService;
+import com.library.util.DisplayPrinter;
 import com.library.util.ValidationHelper;
 
 import java.util.List;
@@ -21,12 +22,12 @@ public class AdminCLI {
         while (true) {
             MenuPrinter.clear();
             MenuPrinter.banner("Admin Menu");
-            System.out.println("1) Add Book");
-            System.out.println("2) Remove Book");
-            System.out.println("3) List Books");
+            System.out.println("1) Add Media");
+            System.out.println("2) List Media");
+            System.out.println("3) Remove Media");
             System.out.println("4) Add User");
-            System.out.println("5) Remove User");
-            System.out.println("6) List Users");
+            System.out.println("5) List Users");
+            System.out.println("6) Remove User");
             System.out.println("0) Logout");
 
             int choice = InputHelper.readInt(in, "Choose: ", 0, 6);
@@ -34,25 +35,25 @@ public class AdminCLI {
             try {
                 switch (choice) {
                     case 1:
-                        addBookFlow();
+                        addMediaFlow();
                         break;
                     case 2:
-                        removeBookFlow();
+                        listMediaFlow();
                         break;
                     case 3:
-                        listBooksFlow();
+                        removeMediaFlow();
                         break;
                     case 4:
                         addUserFlow();
                         break;
                     case 5:
-                        removeUserFlow();
-                        break;
-                    case 6:
                         listUsersFlow();
                         break;
+                    case 6:
+                        removeUserFlow();
+                        break;
                     case 0:
-                        return; // back to login
+                        return;
                     default:
                         break;
                 }
@@ -63,36 +64,46 @@ public class AdminCLI {
         }
     }
 
-    private void addBookFlow() throws Exception {
-        MenuPrinter.title("Add Book");
+    private void addMediaFlow() throws Exception {
+        MenuPrinter.title("Add Media");
         String title  = InputHelper.readNonEmpty(in, "Title: ");
         String author = InputHelper.readNonEmpty(in, "Author: ");
         String isbn   = InputHelper.readNonEmpty(in, "ISBN: ");
-        boolean ok = admin.addBook(title, author, isbn);
-        System.out.println(ok ? "Book added." : "Failed to add book.");
-        InputHelper.pressEnterToContinue(in);  // <- returns to Admin menu after ENTER
-    }
+        String type   = InputHelper.readNonEmpty(in, "Type (book|cd|journal): ").toLowerCase();
 
-    private void removeBookFlow() throws Exception {
-        MenuPrinter.title("Remove Book");
-        int bookId = InputHelper.readInt(in, "Book ID: ", 1, Integer.MAX_VALUE);
-        boolean ok = admin.removeBook(bookId);
-        System.out.println(ok ? "Book removed." : "Failed to remove book.");
+        Media m;
+        switch (type) {
+        case "cd":
+            m = new CD();
+            break;
+        case "journal":
+            m = new Journal();
+            break;
+        default:
+            m = new Book();
+            break;
+        }
+        m.setTitle(title);
+        m.setAuthor(author);
+        m.setIsbn(isbn);
+        boolean ok = admin.addMedia(m);
+        System.out.println(ok ? "Media added." : "Failed to add media.");
         InputHelper.pressEnterToContinue(in);
     }
 
-    private void listBooksFlow() throws Exception {
-        MenuPrinter.title("Books");
-        List<Book> books = admin.listBooks(); // make sure AdminService.listBooks() returns a List<Book>
-        if (books == null || books.isEmpty()) {
-            System.out.println("(No books)");
-        } else {
-            for (Book b : books) {
-                System.out.printf("#%d  %s | %s | %s | %s%n",
-                        b.getBookId(), b.getTitle(), b.getAuthor(), b.getIsbn(),
-                        b.isAvailable() ? "Available" : "Borrowed");
-            }
-        }
+    private void listMediaFlow() throws Exception {
+        MenuPrinter.title("Media");
+        String type = InputHelper.readNonEmpty(in, "Filter Type (book|cd|journal|media): ").toLowerCase();
+        List<Media> mediaList = admin.listAllMedia(type);
+        DisplayPrinter.printMediaList(mediaList);
+        InputHelper.pressEnterToContinue(in);
+    }
+
+    private void removeMediaFlow() throws Exception {
+        MenuPrinter.title("Remove Media");
+        int mediaId = InputHelper.readInt(in, "Media ID: ", 1, Integer.MAX_VALUE);
+        boolean ok = admin.removeMedia(mediaId);
+        System.out.println(ok ? "Media removed." : "Failed to remove media.");
         InputHelper.pressEnterToContinue(in);
     }
 
@@ -117,18 +128,9 @@ public class AdminCLI {
         InputHelper.pressEnterToContinue(in);
     }
 
-
-    private void removeUserFlow() throws Exception {
-        MenuPrinter.title("Remove User");
-        int userId = InputHelper.readInt(in, "User ID: ", 1, Integer.MAX_VALUE);
-        boolean ok = admin.removeUser(userId);
-        System.out.println(ok ? "User removed." : "Failed to remove user.");
-        InputHelper.pressEnterToContinue(in);
-    }
-
     private void listUsersFlow() throws Exception {
         MenuPrinter.title("Users");
-        List<User> users = admin.listUsers();  // make sure AdminService.listUsers() returns a List<User>
+        List<User> users = admin.listUsers();
         if (users == null || users.isEmpty()) {
             System.out.println("(No users)");
         } else {
@@ -139,4 +141,13 @@ public class AdminCLI {
         }
         InputHelper.pressEnterToContinue(in);
     }
+    
+    private void removeUserFlow() throws Exception {
+        MenuPrinter.title("Remove User");
+        int userId = InputHelper.readInt(in, "User ID: ", 1, Integer.MAX_VALUE);
+        boolean ok = admin.removeUser(userId);
+        System.out.println(ok ? "User removed." : "Failed to remove user.");
+        InputHelper.pressEnterToContinue(in);
+    }
+
 }

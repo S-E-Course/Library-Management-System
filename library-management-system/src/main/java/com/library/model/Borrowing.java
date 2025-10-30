@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public class Borrowing {
     private int borrowId;
     private int userId;
-    private int bookId;
+    private int mediaId;
     private LocalDate borrowDate;
     private LocalDate dueDate;
     private LocalDate returnDate;
@@ -28,12 +28,12 @@ public class Borrowing {
         this.userId = userId;
     }
 
-    public int getBookId() {
-        return bookId;
+    public int getMediaId() {
+        return mediaId;
     }
 
-    public void setBookId(int bookId) {
-        this.bookId = bookId;
+    public void setMediaId(int mediaId) {
+        this.mediaId = mediaId;
     }
 
     public LocalDate getBorrowDate() {
@@ -71,17 +71,5 @@ public class Borrowing {
     public boolean isOverdue() {
         if (dueDate == null) return false;
         return dueDate.isBefore(java.time.LocalDate.now());
-    }
-
-    public String toString() {
-        return "Borrowing{" +
-                "borrowId=" + borrowId +
-                ", userId=" + userId +
-                ", bookId=" + bookId +
-                ", borrowDate=" + borrowDate +
-                ", dueDate=" + dueDate +
-                ", returnDate=" + returnDate +
-                ", status='" + status + '\'' +
-                '}';
     }
 }
