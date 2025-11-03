@@ -28,9 +28,11 @@ public class AdminCLI {
             System.out.println("4) Add User");
             System.out.println("5) List Users");
             System.out.println("6) Remove User");
+            System.out.println("7) Send Overdue Reminders");
             System.out.println("0) Logout");
+            
 
-            int choice = InputHelper.readInt(in, "Choose: ", 0, 6);
+            int choice = InputHelper.readInt(in, "Choose: ", 0, 7);
 
             try {
                 switch (choice) {
@@ -51,6 +53,9 @@ public class AdminCLI {
                         break;
                     case 6:
                         removeUserFlow();
+                        break;
+                    case 7:
+                        sendRemindersFlow();
                         break;
                     case 0:
                         return;
@@ -147,6 +152,14 @@ public class AdminCLI {
         int userId = InputHelper.readInt(in, "User ID: ", 1, Integer.MAX_VALUE);
         boolean ok = admin.removeUser(userId);
         System.out.println(ok ? "User removed." : "Failed to remove user.");
+        InputHelper.pressEnterToContinue(in);
+        
+    }
+    
+    private void sendRemindersFlow() throws Exception {
+        MenuPrinter.title("Sending Overdue Reminders");
+        int notified = admin.sendOverdueRemindersFromEnv();
+        System.out.println("Reminders sent to " + notified + " user(s).");
         InputHelper.pressEnterToContinue(in);
     }
 

@@ -15,6 +15,7 @@ public class AdminService {
     private final UserDAO userDAO = new UserDAO();
     private final MediaDAO mediaDAO = new MediaDAO();
     private User loggedAdmin;
+    BorrowingDAO borrowingDAO = new BorrowingDAO();
 
     /**
      * Initializes a new AdminService with a database connection.
@@ -165,5 +166,20 @@ public class AdminService {
         if (loggedAdmin == null)
             throw new IllegalStateException("Admin not logged in");
         return userDAO.getAllUsers(conn);
+    }
+    
+ // US3.1 – load credentials from .env and send reminders
+    public int sendOverdueRemindersFromEnv() throws Exception {
+        EmailServer emailServer = new DotenvEmailServer();
+        EmailNotifier notifier = new EmailNotifier(emailServer);
+        ReminderService reminder = new ReminderService(conn, borrowingDAO, userDAO, notifier);
+        return reminder.sendOverdueReminders().size();
+    }
+
+    // Pure unit tests using a mock EmailServer. 
+    public int sendOverdueReminders(EmailServer emailServer) throws Exception {
+        EmailNotifier notifier = new EmailNotifier(emailServer);
+        ReminderService reminder = new ReminderService(conn, borrowingDAO, userDAO, notifier);
+        return reminder.sendOverdueReminders().size();
     }
 }
