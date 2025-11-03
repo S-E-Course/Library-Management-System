@@ -10,11 +10,11 @@ import java.util.List;
 
 
 public class UserService {
-    private final Connection conn;
-    private final UserDAO userDAO = new UserDAO();
-    private final MediaDAO mediaDAO = new MediaDAO();
-    private final BorrowingDAO borrowingDAO = new BorrowingDAO();
-    private final FineDAO fineDAO = new FineDAO();
+    private Connection conn;
+    private UserDAO userDAO = new UserDAO();
+    private MediaDAO mediaDAO = new MediaDAO();
+    private BorrowingDAO borrowingDAO = new BorrowingDAO();
+    private FineDAO fineDAO = new FineDAO();
     private User loggedUser;
 
 
@@ -119,4 +119,13 @@ public class UserService {
             throw new IllegalStateException("User not logged in.");
         return fineDAO.findFines(conn, userId);
     }
+    
+    
+    protected void setLoggedUser(User user) { this.loggedUser = user; }
+    protected void setUserDAO(UserDAO dao) { this.userDAO = dao; }
+    protected void setMediaDAO(MediaDAO dao) { this.mediaDAO = dao; }
+    protected void setBorrowingDAO(BorrowingDAO dao) { this.borrowingDAO = dao; }
+    protected void setFineDAO(FineDAO dao) { this.fineDAO = dao; }
+    protected void setConnection(Connection c) { this.conn = c; }
+
 }
