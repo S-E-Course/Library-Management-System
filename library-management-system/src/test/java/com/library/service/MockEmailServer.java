@@ -3,12 +3,12 @@ package com.library.service;
 import java.util.ArrayList;
 import java.util.List;
 
-// Test double that records all emails sent. 
+/** Test double that records emails instead of sending them. */
 public class MockEmailServer implements EmailServer {
 
     public static class SentEmail {
         public final String to, subject, body;
-        SentEmail(String to, String subject, String body) {
+        public SentEmail(String to, String subject, String body) {
             this.to = to; this.subject = subject; this.body = body;
         }
     }
