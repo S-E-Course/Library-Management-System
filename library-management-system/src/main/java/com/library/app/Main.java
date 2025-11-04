@@ -9,7 +9,16 @@ import com.library.util.DatabaseConnection;
 
 import java.util.Scanner;
 
+/**
+ * Application entry point and role router.
+ * Opens a database connection, authenticates the user, and runs the role-specific CLI.
+ */
 public class Main {
+    /**
+     * Starts the application.
+     *
+     * @param args command line arguments
+     */
     public static void main(String[] args) {
         try {
             DatabaseConnection.connect();
@@ -62,6 +71,14 @@ public class Main {
         }
     }
 
+    /**
+     * Runs an admin session.
+     *
+     * @param in console scanner
+     * @param username admin username
+     * @param password admin password
+     * @throws Exception if a service error occurs
+     */
     private static void runAdmin(Scanner in, String username, String password) throws Exception {
         AdminService adminService = new AdminService();
         try {
@@ -79,23 +96,39 @@ public class Main {
         }
     }
 
+    /**
+     * Runs a librarian session.
+     *
+     * @param in console scanner
+     * @param username librarian username
+     * @param password librarian password
+     * @throws Exception if a service error occurs
+     */
     private static void runLibrarian(Scanner in, String username, String password) throws Exception {
         LibrarianService librarianService = new LibrarianService();
         try {
-        	if (!librarianService.login(username, password)) {
+            if (!librarianService.login(username, password)) {
                 System.out.println("Login failed for admin.");
                 InputHelper.pressEnterToContinue(in);
                 return;
-        	}
+            }
             new LibrarianCLI(in, librarianService).run();
         } catch (Exception e) {
             System.out.println("Librarian session error: " + e.getMessage());
             InputHelper.pressEnterToContinue(in);
         } finally {
-        	librarianService.logout();
+            librarianService.logout();
         }
     }
 
+    /**
+     * Runs a user session.
+     *
+     * @param in console scanner
+     * @param username user username
+     * @param password user password
+     * @throws Exception if a service error occurs
+     */
     private static void runUser(Scanner in, String username, String password) throws Exception {
         UserService userService = new UserService();
         try {
@@ -113,4 +146,3 @@ public class Main {
         }
     }
 }
-

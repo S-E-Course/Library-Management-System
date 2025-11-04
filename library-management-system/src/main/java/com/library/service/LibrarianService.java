@@ -25,12 +25,23 @@ public class LibrarianService {
     private final MediaDAO mediaDAO = new MediaDAO();
     private User loggedLibrarian;
 
-    /** Establish DB connection */
+    /** Establish DB connection *//**
+     * Establishes a database connection for librarian operations.
+    *
+    * @throws Exception if connecting to the database fails
+    */
     public LibrarianService() throws Exception {
         this.conn = DatabaseConnection.connect();
     }
 
-    /** Authenticate librarian */
+    /**
+     * Authenticates a librarian by username and password hash.
+     *
+     * @param username     librarian username
+     * @param passwordHash hashed password
+     * @return true if credentials are valid
+     * @throws Exception if a data access error occurs
+     */
     public boolean login(String username, String passwordHash) throws Exception {
         User librarian = userDAO.findByUsername(conn, username);
         if (librarian != null && librarian.getPasswordHash().equals(passwordHash)) {
@@ -40,14 +51,21 @@ public class LibrarianService {
         return false;
     }
 
-    /** Logout and close DB connection */
+    /**
+     * Logs out the current librarian and closes the shared database connection.
+     *
+     * @throws SQLException if disconnect fails
+     */
     public void logout() throws SQLException {
         loggedLibrarian = null;
         DatabaseConnection.disconnect();
     }
 
     /**
-     * Detect overdue media and automatically issue or update fines.
+     * Detects overdue media and automatically issues or updates fines.
+     * Applies the appropriate fine strategy per media type.
+     *
+     * @throws Exception if reading or writing database records fails
      */
     public void detectOverdueMedia() throws Exception {
         if (loggedLibrarian == null)

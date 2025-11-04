@@ -11,26 +11,41 @@ import jakarta.mail.internet.MimeMessage;
 
 import java.util.Properties;
 
-/** Reusable SMTP mailer (Gmail TLS on port 587). */
+/**
+ * SMTP mail sender used in production to deliver reminder emails (US3.1).
+ * Uses Gmail SMTP with STARTTLS on port 587 and credentials provided by {@link DotenvEmailServer}.
+ */
 public class EmailService {
 
     private final String username;
     private final String password;
 
+    /**
+     * Creates a new SMTP email service.
+     *
+     * @param username SMTP username (email address)
+     * @param password SMTP password or app password
+     */
     public EmailService(String username, String password) {
         this.username = username;
         this.password = password;
     }
 
+    /**
+     * Sends a simple text email.
+     *
+     * @param to      recipient email address
+     * @param subject email subject
+     * @param body    email body text
+     * @throws RuntimeException if sending fails
+     */
     public void sendEmail(String to, String subject, String body) {
-        // SMTP configuration
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
 
-        // Create a session with authentication
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -39,14 +54,11 @@ public class EmailService {
         });
 
         try {
-            // Build email message
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(username));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
             message.setSubject(subject);
             message.setText(body);
-
-            // Send email
             Transport.send(message);
             System.out.println("Email sent successfully to " + to);
         } catch (MessagingException e) {

@@ -2,74 +2,70 @@ package com.library.model;
 
 import java.time.LocalDate;
 
+/**
+ * Borrowing record linking a user and a media item.
+ * Tracks dates and status values such as borrowed, overdue, returned.
+ *
+ * @author
+ * @version 1.0
+ */
 public class Borrowing {
     private int borrowId;
     private int userId;
     private int mediaId;
     private LocalDate borrowDate;
     private LocalDate dueDate;
-    private LocalDate returnDate;
-    private String status;
+    private LocalDate returnDate;  // may be null
+    private String status;         // borrowed, overdue, returned
 
-    
-    public int getBorrowId() {
-        return borrowId;
-    }
+    /** @return borrowing identifier */
+    public int getBorrowId() { return borrowId; }
 
-    public void setBorrowId(int borrowId) {
-        this.borrowId = borrowId;
-    }
+    /** @param borrowId borrowing identifier */
+    public void setBorrowId(int borrowId) { this.borrowId = borrowId; }
 
-    public int getUserId() {
-        return userId;
-    }
+    /** @return user identifier */
+    public int getUserId() { return userId; }
 
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
+    /** @param userId user identifier */
+    public void setUserId(int userId) { this.userId = userId; }
 
-    public int getMediaId() {
-        return mediaId;
-    }
+    /** @return media identifier */
+    public int getMediaId() { return mediaId; }
 
-    public void setMediaId(int mediaId) {
-        this.mediaId = mediaId;
-    }
+    /** @param mediaId media identifier */
+    public void setMediaId(int mediaId) { this.mediaId = mediaId; }
 
-    public LocalDate getBorrowDate() {
-        return borrowDate;
-    }
+    /** @return date the item was borrowed */
+    public LocalDate getBorrowDate() { return borrowDate; }
 
-    public void setBorrowDate(LocalDate borrowDate) {
-        this.borrowDate = borrowDate;
-    }
+    /** @param borrowDate date the item was borrowed */
+    public void setBorrowDate(LocalDate borrowDate) { this.borrowDate = borrowDate; }
 
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
+    /** @return due date */
+    public LocalDate getDueDate() { return dueDate; }
 
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
+    /** @param dueDate due date */
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
 
-    public LocalDate getReturnDate() {
-        return returnDate;
-    }
+    /** @return date returned or null */
+    public LocalDate getReturnDate() { return returnDate; }
 
-    public void setReturnDate(LocalDate returnDate) {
-        this.returnDate = returnDate;
-    }
+    /** @param returnDate date returned or null */
+    public void setReturnDate(LocalDate returnDate) { this.returnDate = returnDate; }
 
-    public String getStatus() {
-        return status;
-    }
+    /** @return status string such as borrowed, overdue, returned */
+    public String getStatus() { return status; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
-    
+    /** @param status status string */
+    public void setStatus(String status) { this.status = status; }
+
+    /**
+     * Returns true if the item is not yet returned and the due date is before today.
+     *
+     * @return true when overdue
+     */
     public boolean isOverdue() {
-        if (dueDate == null) return false;
-        return dueDate.isBefore(java.time.LocalDate.now());
+        return returnDate == null && dueDate != null && dueDate.isBefore(LocalDate.now());
     }
 }

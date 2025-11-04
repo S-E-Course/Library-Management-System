@@ -10,15 +10,28 @@ import com.library.util.DisplayPrinter;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Command-line interface for end users.
+ * Provides search, borrow, return, fine summary, and fine payment actions.
+ */
 public class UserCLI {
     private final Scanner in;
     private final UserService user;
 
+    /**
+     * Creates a new UserCLI.
+     *
+     * @param in console scanner
+     * @param user user service
+     */
     public UserCLI(Scanner in, UserService user) {
         this.in = in;
         this.user = user;
     }
 
+    /**
+     * Runs the user interaction loop until logout.
+     */
     public void run() {
         while (true) {
             MenuPrinter.clear();
@@ -60,6 +73,11 @@ public class UserCLI {
         }
     }
 
+    /**
+     * Prompts for type and keyword, then displays search results.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void searchMediaFlow() throws Exception {
         MenuPrinter.title("Search Media");
         String type = InputHelper.readNonEmpty(in, "Media Type (book/cd/journal/media): ");
@@ -69,6 +87,11 @@ public class UserCLI {
         InputHelper.pressEnterToContinue(in);
     }
 
+    /**
+     * Prompts for media id and attempts to borrow it.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void borrowMediaFlow() throws Exception {
         MenuPrinter.title("Borrow Media");
         int mediaId = InputHelper.readInt(in, "Media ID: ", 1, Integer.MAX_VALUE);
@@ -77,6 +100,11 @@ public class UserCLI {
         InputHelper.pressEnterToContinue(in);
     }
 
+    /**
+     * Shows a list of borrowed media and prompts for which to return.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void returnMediaFlow() throws Exception {
         MenuPrinter.title("Return Media ----\n---- Borrowed Media");
         List<Borrowing> borrowings = user.findBorrowings(user.getLoggedUser().getUserId());
@@ -86,10 +114,13 @@ public class UserCLI {
         System.out.println(ok ? "Returned successfully." : "Could not return.");
         InputHelper.pressEnterToContinue(in);
     }
-    
+
+    /**
+     * Shows the mixed-media fine summary for the logged-in user.
+     */
     private void showFineSummary() {
         try {
-        	FineSummary summary = user.getFineSummary();
+            FineSummary summary = user.getFineSummary();
             com.library.util.DisplayPrinter.printFineSummary(summary);
         } catch (Exception e) {
             System.out.println("Failed to load fine summary: " + e.getMessage());
@@ -97,6 +128,11 @@ public class UserCLI {
         InputHelper.pressEnterToContinue(in);
     }
 
+    /**
+     * Prompts for a fine and amount and attempts to pay it.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void payFinesFlow() throws Exception {
         MenuPrinter.title("Pay Fine");
         List<Fine> fines = user.findFines(user.getLoggedUser().getUserId());

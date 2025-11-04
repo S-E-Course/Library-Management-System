@@ -14,7 +14,15 @@ import java.io.IOException;
  */
 public class DatabaseConnection {
     private static Connection connection;
-
+    /**
+     * Connects to the database using configuration from db.properties.
+     * 
+     * If a connection already exists and is open, it will reuse it.
+     * 
+     * @return a valid SQL Connection
+     * @throws SQLException if a database access error occurs
+     * @throws IOException if the db.properties file cannot be found or read
+     */
     public static Connection connect() throws SQLException, IOException {
         if (connection == null || connection.isClosed()) {
             Properties props = new Properties();
@@ -32,7 +40,12 @@ public class DatabaseConnection {
         }
         return connection;
     }
-
+    
+    /**
+     * Closes the active database connection if it is currently open.
+     * 
+     * @throws SQLException if closing the connection fails
+     */
     public static void disconnect() throws SQLException {
         if (connection != null && !connection.isClosed()) {
             connection.close();

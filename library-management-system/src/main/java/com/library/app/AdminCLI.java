@@ -9,15 +9,28 @@ import com.library.util.ValidationHelper;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Command-line interface for administrator operations.
+ * Provides menu actions to manage media and users and to send overdue reminders.
+ */
 public class AdminCLI {
     private final Scanner in;
     private final AdminService admin;
 
+    /**
+     * Creates a new AdminCLI.
+     *
+     * @param in console scanner
+     * @param admin admin service instance
+     */
     public AdminCLI(Scanner in, AdminService admin) {
         this.in = in;
         this.admin = admin;
     }
 
+    /**
+     * Runs the admin interaction loop until the user chooses logout.
+     */
     public void run() {
         while (true) {
             MenuPrinter.clear();
@@ -30,7 +43,6 @@ public class AdminCLI {
             System.out.println("6) Remove User");
             System.out.println("7) Send Overdue Reminders");
             System.out.println("0) Logout");
-            
 
             int choice = InputHelper.readInt(in, "Choose: ", 0, 7);
 
@@ -69,6 +81,11 @@ public class AdminCLI {
         }
     }
 
+    /**
+     * Prompts for media fields and adds a media item.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void addMediaFlow() throws Exception {
         MenuPrinter.title("Add Media");
         String title  = InputHelper.readNonEmpty(in, "Title: ");
@@ -96,6 +113,11 @@ public class AdminCLI {
         InputHelper.pressEnterToContinue(in);
     }
 
+    /**
+     * Lists media filtered by type.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void listMediaFlow() throws Exception {
         MenuPrinter.title("Media");
         String type = InputHelper.readNonEmpty(in, "Filter Type (book|cd|journal|media): ").toLowerCase();
@@ -104,6 +126,11 @@ public class AdminCLI {
         InputHelper.pressEnterToContinue(in);
     }
 
+    /**
+     * Prompts for media id and removes the media item.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void removeMediaFlow() throws Exception {
         MenuPrinter.title("Remove Media");
         int mediaId = InputHelper.readInt(in, "Media ID: ", 1, Integer.MAX_VALUE);
@@ -112,11 +139,16 @@ public class AdminCLI {
         InputHelper.pressEnterToContinue(in);
     }
 
+    /**
+     * Prompts for user data and adds a new user.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void addUserFlow() throws Exception {
         MenuPrinter.title("Add User");
         String username = InputHelper.readNonEmpty(in, "Username: ");
         String email    = InputHelper.readNonEmpty(in, "Email: ");
-        String password = InputHelper.readPassword(in, "Password (plain/hash): ");
+        String password = InputHelper.readPassword(in, "Password: ");
         String role     = InputHelper.readNonEmpty(in, "Role (admin|librarian|user): ").toLowerCase();
         if (!ValidationHelper.isValidEmail(email)) {
             System.out.println("Invalid email format.");
@@ -133,6 +165,11 @@ public class AdminCLI {
         InputHelper.pressEnterToContinue(in);
     }
 
+    /**
+     * Lists all users with basic fields.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void listUsersFlow() throws Exception {
         MenuPrinter.title("Users");
         List<User> users = admin.listUsers();
@@ -146,16 +183,25 @@ public class AdminCLI {
         }
         InputHelper.pressEnterToContinue(in);
     }
-    
+
+    /**
+     * Prompts for user id and removes the user.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void removeUserFlow() throws Exception {
         MenuPrinter.title("Remove User");
         int userId = InputHelper.readInt(in, "User ID: ", 1, Integer.MAX_VALUE);
         boolean ok = admin.removeUser(userId);
         System.out.println(ok ? "User removed." : "Failed to remove user.");
         InputHelper.pressEnterToContinue(in);
-        
     }
-    
+
+    /**
+     * Triggers US3.1 Send Overdue Reminders using AdminService.
+     *
+     * @throws Exception if a service error occurs
+     */
     private void sendRemindersFlow() throws Exception {
         MenuPrinter.title("Sending Overdue Reminders");
         int notified = admin.sendOverdueRemindersFromEnv();

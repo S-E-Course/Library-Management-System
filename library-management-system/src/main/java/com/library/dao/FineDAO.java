@@ -7,18 +7,25 @@ import java.util.List;
 import com.library.model.Borrowing;
 import com.library.model.Fine;
 
-
+/**
+ * DAO for issuing, updating, and reading fines.
+ * Handles fine creation, payment, queries, and updates.
+ *
+ * @author
+ * @version 1.0
+ */
 public class FineDAO {
-	
-	/**
-     * Issues a new fine for a specific borrowing.
-     * @param conn    active DB connection
-     * @param borrowId related borrowing record
-     * @param userId  the fined user's ID
-     * @param amount  fine amount
-     * @return true if inserted successfully
-	 * @throws Exception
-	 */
+
+    /**
+     * Issues a new fine for a borrowing.
+     *
+     * @param conn active database connection
+     * @param borrowId borrowing identifier
+     * @param userId user identifier
+     * @param amount fine amount
+     * @return true if the fine was inserted
+     * @throws Exception if a database error occurs
+     */
     public boolean issueFine(Connection conn, int borrowId, int userId, double amount) throws Exception {
         String sql = "INSERT INTO fines (user_id, borrow_id, amount, paid) VALUES (?, ?, ?, FALSE)";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -28,18 +35,16 @@ public class FineDAO {
             return stmt.executeUpdate() > 0;
         }
     }
-    
+
     /**
-     * Allows a user to pay all or part of the fine.
-     * Decreases fine amount.
-     * Marks the fine as paid if balance reaches 0.
-     * Updates user total balance and borrowing status if fully paid.
-     * @param conn   DB connection
-     * @param fineId fine record ID
-     * @param userId user who pays
-     * @param amount amount paid
-     * @return true if update was successful
-     * @throws Exception if any SQL error occurs
+     * Pays part or all of a fine. Updates the user balance. If fully paid then the borrowing is marked returned and media is set available.
+     *
+     * @param conn active database connection
+     * @param fineId fine identifier
+     * @param userId user identifier
+     * @param amount amount to pay
+     * @return true if the update succeeded
+     * @throws Exception if a database error occurs
      */
     public boolean payFine(Connection conn, int fineId, int userId, double amount) throws Exception {
         conn.setAutoCommit(false);
@@ -88,15 +93,14 @@ public class FineDAO {
         }
     }
 
-
-    
     /**
-     * Gets the current fine balance for a specific fine record.
-     * @param conn
-     * @param fineId
-     * @param userId
-     * @return
-     * @throws SQLException
+     * Returns the current amount for a fine.
+     *
+     * @param conn active database connection
+     * @param fineId fine identifier
+     * @param userId user identifier
+     * @return current fine amount
+     * @throws SQLException if the fine is not found or a database error occurs
      */
     public double getFineAmount(Connection conn, int fineId, int userId) throws SQLException {
         String sql = "SELECT amount FROM fines WHERE fine_id = ? AND user_id = ?";
@@ -113,11 +117,12 @@ public class FineDAO {
     }
 
     /**
-     * Checks if a fine for a borrowing has been paid.
-     * @param conn
-     * @param borrowId
-     * @return TRUE if paid, FALSE if not, or NULL if no fine exists
-     * @throws Exception
+     * Checks if a fine for a borrowing is paid.
+     *
+     * @param conn active database connection
+     * @param borrowId borrowing identifier
+     * @return true if paid, false if not paid, or null if no fine exists
+     * @throws Exception if a database error occurs
      */
     public Boolean isPaid(Connection conn, int borrowId) throws Exception {
         String sql = "SELECT paid FROM fines WHERE borrow_id = ?";
@@ -129,8 +134,15 @@ public class FineDAO {
         }
         return null;
     }
-    
-    
+
+    /**
+     * Returns all fines for a user.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @return list of fines for the user
+     * @throws Exception if a database error occurs
+     */
     public List<Fine> findFines(Connection conn, int userId) throws Exception {
         List<Fine> fines = new ArrayList<>();
         String sql = "SELECT * FROM fines WHERE user_id = ?";
@@ -152,13 +164,14 @@ public class FineDAO {
         }
         return fines;
     }
-    
+
     /**
-     * Retrieves the fine associated with a specific borrowing record.
-     * @param conn active DB connection
-     * @param borrowId the borrowing ID to look up
-     * @return Fine object if found, otherwise null
-     * @throws Exception if SQL error occurs
+     * Returns the fine for a borrowing.
+     *
+     * @param conn active database connection
+     * @param borrowId borrowing identifier
+     * @return the fine or null if not found
+     * @throws Exception if a database error occurs
      */
     public Fine getBorrowingFine(Connection conn, int borrowId) throws Exception {
         String sql = "SELECT * FROM fines WHERE borrow_id = ?";
@@ -179,16 +192,18 @@ public class FineDAO {
         }
         return null;
     }
-    
-    
+
     /**
-     * Adds or subtracts from the fine amount.
-     * Positive amount → increases fine.
-     * Negative amount → decreases fine.
+     * Updates a fine by adding a delta amount. A positive value increases the fine. A negative value decreases the fine.
+     *
+     * @param conn active database connection
+     * @param fineId fine identifier
+     * @param amount delta amount to apply
+     * @throws Exception if a database error occurs
      */
     public void updateFineBalance(Connection conn, int fineId, double amount) throws Exception {
         String sql = "UPDATE fines SET amount = amount + ? WHERE fine_id = ?";
-        
+
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setDouble(1, amount);
             stmt.setInt(2, fineId);
@@ -197,16 +212,19 @@ public class FineDAO {
     }
 
     /**
-     * Updates fine date to the current date.
+     * Sets the fine date to the current date.
+     *
+     * @param conn active database connection
+     * @param fineId fine identifier
+     * @throws Exception if a database error occurs
      */
     public void updateFineDate(Connection conn, int fineId) throws Exception {
         String sql = "UPDATE fines SET fine_date = CURRENT_DATE WHERE fine_id = ?";
-        
+
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, fineId);
             stmt.executeUpdate();
         }
     }
-
 
 }

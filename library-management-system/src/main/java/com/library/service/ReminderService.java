@@ -9,9 +9,10 @@ import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.*;
 
-/*
-  Finds all overdue borrowings and emails each user once with:
-   "You have n overdue book(s)."
+/**
+ * US3.1 reminder logic. Groups overdue borrowings per user and sends:
+ * "You have n overdue book(s)." to each affected user.
+ * The mailer is provided as an {@link EmailServer} so tests can use a mock.
  */
 public class ReminderService {
 
@@ -19,7 +20,14 @@ public class ReminderService {
     private final BorrowingDAO borrowingDAO;
     private final UserDAO userDAO;
     private final EmailNotifier notifier;
-
+    
+    
+    /**
+     * Creates a reminder service.
+     *
+     * @param conn   sql connection used for queries
+     * @param mailer email server implementation (real or mock)
+     */
     public ReminderService(Connection conn,
                            BorrowingDAO borrowingDAO,
                            UserDAO userDAO,
@@ -30,7 +38,14 @@ public class ReminderService {
         this.notifier = notifier;
     }
 
-    // Returns map<userId, overdueCount> for verification.
+    /**
+     * Sends reminder emails to all users who currently have overdue items.
+     * The email body follows the acceptance text:
+     * "You have n overdue book(s)."
+     *
+     * @return number of distinct users emailed
+     * @throws Exception if fetching or sending fails
+     */
     public Map<Integer, Integer> sendOverdueReminders() throws Exception {
         List<Borrowing> all = borrowingDAO.findOverdueMedia(conn);
         if (all == null || all.isEmpty()) return Collections.emptyMap();

@@ -8,20 +8,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DAO for handling borrow and return operations of media (books, CDs, journals).
- * 
- * Supports dynamic due date based on media type:
- *  - Book: 28 days
- *  - CD: 7 days
- *  - Journal: 14 days
+ * DAO for handling borrow and return operations of media.
+ * Supports due dates based on media type: Book 28 days, CD 7 days, Journal 14 days.
+ *
+ * @author
+ * @version 1.0
  */
 public class BorrowingDAO {
 
     private final MediaDAO mediaDAO = new MediaDAO();
 
     /**
-     * Finds all overdue borrowings.
+     * Finds all overdue borrowings. A borrowing is overdue if it is in status borrowed and past due date, or status overdue.
+     *
+     * @param conn active database connection
      * @return list of overdue borrowings
+     * @throws Exception if a database error occurs
      */
     public List<Borrowing> findOverdueMedia(Connection conn) throws Exception {
         List<Borrowing> list = new ArrayList<>();
@@ -47,7 +49,15 @@ public class BorrowingDAO {
         }
         return list;
     }
-    
+
+    /**
+     * Finds all borrowings for a user.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @return list of borrowings for the user
+     * @throws Exception if a database error occurs
+     */
     public List<Borrowing> findBorrowings(Connection conn, int userId) throws Exception {
         List<Borrowing> list = new ArrayList<>();
         String sql = "SELECT * FROM borrowings " +
@@ -71,7 +81,13 @@ public class BorrowingDAO {
     }
 
     /**
-     * Finds an active borrowing for a specific user and media item.
+     * Finds an active borrowing for a user and media. Active means status borrowed or overdue.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @param mediaId media identifier
+     * @return the active borrowing or null if none found
+     * @throws Exception if a database error occurs
      */
     public Borrowing findActiveBorrowing(Connection conn, int userId, int mediaId) throws Exception {
         String sql = "SELECT borrow_id, status, due_date FROM borrowings " +
@@ -96,8 +112,13 @@ public class BorrowingDAO {
     }
 
     /**
-     * Handles returning a borrowed media item.
-     * Checks for overdue status and unpaid fines.
+     * Returns a borrowed media item. If the borrowing is overdue then the fine must be paid first.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @param mediaId media identifier
+     * @return true if the return succeeded, false otherwise
+     * @throws Exception if a database error occurs
      */
     public boolean returnMedia(Connection conn, int userId, int mediaId) throws Exception {
         conn.setAutoCommit(false);
@@ -137,8 +158,13 @@ public class BorrowingDAO {
     }
 
     /**
-     * Handle borrowing a media item.
-     * Calculates due date based on media type.
+     * Borrows a media item and sets a due date based on media type.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @param mediaId media identifier
+     * @return true if the borrow succeeded, false otherwise
+     * @throws Exception if a database error occurs
      */
     public boolean borrowMedia(Connection conn, int userId, int mediaId) throws Exception {
         conn.setAutoCommit(false);
@@ -175,20 +201,21 @@ public class BorrowingDAO {
             throw e;
         }
     }
-    
+
     /**
-     * Retrieves the borrowing record associated with a specific fine.
-     * @param conn active DB connection
-     * @param fineId the fine ID
-     * @return Borrowing object if found, otherwise null
-     * @throws Exception if SQL error occurs
+     * Retrieves the borrowing record associated with a fine.
+     *
+     * @param conn active database connection
+     * @param fineId fine identifier
+     * @return the borrowing or null if not found
+     * @throws Exception if a database error occurs
      */
     public Borrowing getFineBorrowing(Connection conn, int fineId) throws Exception {
-    	String sql =
-    	        "SELECT * " +
-    	        "FROM borrowings b " +
-    	        "JOIN fines f ON b.borrow_id = f.borrow_id " +
-    	        "WHERE f.fine_id = ?";
+        String sql =
+                "SELECT * " +
+                "FROM borrowings b " +
+                "JOIN fines f ON b.borrow_id = f.borrow_id " +
+                "WHERE f.fine_id = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, fineId);
@@ -201,11 +228,11 @@ public class BorrowingDAO {
                     Date borrowDate = rs.getDate("borrow_date");
                     Date dueDate = rs.getDate("due_date");
                     Date returnDate = rs.getDate("return_date");
-                    
+
                     if (borrowDate != null) b.setBorrowDate(borrowDate.toLocalDate());
                     if (dueDate != null) b.setDueDate(dueDate.toLocalDate());
                     if (returnDate != null) b.setReturnDate(returnDate.toLocalDate());
-                    
+
                     b.setStatus(rs.getString("status"));
                     return b;
                 }
@@ -213,13 +240,14 @@ public class BorrowingDAO {
         }
         return null;
     }
-    
+
     /**
-     * Updates the status of a borrowing record
+     * Updates the status field for a borrowing.
+     *
      * @param conn active database connection
-     * @param borrowingId the borrowing record to update
-     * @param newStatus the new status value
-     * @throws Exception if SQL operation fails
+     * @param borrowingId borrowing identifier
+     * @param newStatus new status value
+     * @throws Exception if a database error occurs
      */
     public void updateBorrowingStatus(Connection conn, int borrowingId, String newStatus) throws Exception {
         String sql = "UPDATE borrowings SET status = ? WHERE borrow_id = ?";

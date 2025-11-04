@@ -15,8 +15,30 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for reminder email behavior.
+ * 
+ * Verifies that overdue borrowings are grouped per user and that the reminder
+ * messages recorded by the mock email server match the required format:
+ * "You have n overdue book(s)."
+ * 
+ * This test uses Mockito to fake DAO calls and {@link MockEmailServer} to capture
+ * emails instead of sending real messages.
+ */
 class ReminderServiceTest {
 
+    /**
+     * Ensures the reminder service:
+     * 1) counts overdue items per user correctly,
+     * 2) records exactly the expected emails in the mock server,
+     * 3) uses the required subject and body text.
+     *
+     * Scenario:
+     * - user 1 has two overdue items
+     * - user 2 has one overdue item
+     *
+     * @throws Exception if the service invocation fails
+     */
     @Test
     void sendsExpectedMessageAndRecordsEmails() throws Exception {
         Connection conn = null; // not used by mocks
@@ -60,5 +82,5 @@ class ReminderServiceTest {
 
         assertTrue(foundU1, "Email to user 1 not as expected");
         assertTrue(foundU2, "Email to user 2 not as expected");
-    }
+    } 
 }

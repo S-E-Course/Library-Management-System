@@ -6,10 +6,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+/**
+ * DAO for creation,read,update,deletion, and lookup operations on media. Supports Book, CD, and Journal.
+ *
+ * @author
+ * @version 1.0
+ */
 public class MediaDAO {
 
     /**
-     * Inserts a new media item (Book, CD, or Journal) into the database.
+     * Inserts a new media item.
+     *
+     * @param conn active database connection
+     * @param media media to insert
+     * @return true if the row was inserted
+     * @throws Exception if a database error occurs
      */
     public boolean addMedia(Connection conn, Media media) throws Exception {
         String sql = "INSERT INTO media (title, author, isbn, type) VALUES (?, ?, ?, ?)";
@@ -23,7 +34,12 @@ public class MediaDAO {
     }
 
     /**
-     * Deletes a media record by its ID.
+     * Deletes a media item by id.
+     *
+     * @param conn active database connection
+     * @param mediaId media identifier
+     * @return true if a row was deleted
+     * @throws Exception if a database error occurs
      */
     public boolean removeMedia(Connection conn, int mediaId) throws Exception {
         String sql = "DELETE FROM media WHERE media_id = ?";
@@ -34,12 +50,13 @@ public class MediaDAO {
     }
 
     /**
-     * Searches media records by keyword (title, author, ISBN),
-     * filtered by media type (book/cd/journal).
-     * 
-     * @param conn    database connection
-     * @param keyword text fragment to search
-     * @param type    "book", "cd", "journal", or "media" for all
+     * Searches media by keyword in title, author, or ISBN. Optionally filters by type.
+     *
+     * @param conn active database connection
+     * @param keyword search fragment
+     * @param type media type value or media for all
+     * @return list of matching media
+     * @throws Exception if a database error occurs
      */
     public List<Media> searchMedia(Connection conn, String keyword, String type) throws Exception {
         List<Media> results = new ArrayList<>();
@@ -70,7 +87,13 @@ public class MediaDAO {
     }
 
     /**
-     * Updates the availability status of a media item.
+     * Updates the availability of a media item.
+     *
+     * @param conn active database connection
+     * @param mediaId media identifier
+     * @param available true to set available, false to set borrowed
+     * @return true if a row was updated
+     * @throws Exception if a database error occurs
      */
     public boolean setMediaStatus(Connection conn, int mediaId, boolean available) throws Exception {
         String sql = "UPDATE media SET available = ? WHERE media_id = ?";
@@ -82,7 +105,12 @@ public class MediaDAO {
     }
 
     /**
-     * Checks if a media item is available for borrowing.
+     * Checks if a media item is available.
+     *
+     * @param conn active database connection
+     * @param mediaId media identifier
+     * @return true if available, false if not available
+     * @throws Exception if the media is not found or a database error occurs
      */
     public boolean mediaAvailable(Connection conn, int mediaId) throws Exception {
         String sql = "SELECT available FROM media WHERE media_id = ?";
@@ -93,12 +121,14 @@ public class MediaDAO {
         }
         throw new Exception("Media not found");
     }
-    
+
     /**
-     * Lists all media items, filtered by type.
-     * 
-     * @param conn database connection
-     * @param type "book", "cd", "journal", or "media" for all
+     * Lists all media, optionally filtered by type.
+     *
+     * @param conn active database connection
+     * @param type media type value or media for all
+     * @return list of media
+     * @throws Exception if a database error occurs
      */
     public List<Media> listAllMedia(Connection conn, String type) throws Exception {
         List<Media> mediaList = new ArrayList<>();
@@ -116,14 +146,19 @@ public class MediaDAO {
 
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-            	mediaList.add(mapRowToMedia(rs));
+                mediaList.add(mapRowToMedia(rs));
             }
         }
         return mediaList;
     }
 
     /**
-     * Finds a specific media item by ID.
+     * Finds a media item by id.
+     *
+     * @param conn active database connection
+     * @param mediaId media identifier
+     * @return the media item or null if not found
+     * @throws Exception if a database error occurs
      */
     public Media findById(Connection conn, int mediaId) throws Exception {
         String sql = "SELECT * FROM media WHERE media_id = ?";
@@ -136,7 +171,15 @@ public class MediaDAO {
         }
         return null;
     }
-    
+
+    /**
+     * Returns active borrowed media for a user.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @return list of active media for the user
+     * @throws Exception if a database error occurs
+     */
     public List<Media> findActiveMedia(Connection conn, int userId) throws Exception {
         List<Media> mediaList = new ArrayList<>();
 
@@ -155,25 +198,28 @@ public class MediaDAO {
         return mediaList;
     }
 
-
     /**
-     * Maps a database row to the correct Media subclass (Book/CD/Journal).
+     * Maps a result set row to a Media subclass instance.
+     *
+     * @param rs result set positioned on a media row
+     * @return a Media instance
+     * @throws SQLException if a column read fails
      */
     private Media mapRowToMedia(ResultSet rs) throws SQLException {
         String type = rs.getString("type");
         Media m;
 
         switch (type) {
-        case "cd":
-            m = new CD();
-            break;
-        case "journal":
-            m = new Journal();
-            break;
-        default:
-            m = new Book();
-            break;
-    }
+            case "cd":
+                m = new CD();
+                break;
+            case "journal":
+                m = new Journal();
+                break;
+            default:
+                m = new Book();
+                break;
+        }
 
         m.setId(rs.getInt("media_id"));
         m.setTitle(rs.getString("title"));
