@@ -3,6 +3,7 @@ package com.library.app;
 import com.library.model.Borrowing;
 import com.library.model.Fine;
 import com.library.model.Media;
+import com.library.service.FineSummary;
 import com.library.service.UserService;
 import com.library.util.DisplayPrinter;
 
@@ -25,6 +26,7 @@ public class UserCLI {
             System.out.println("1) Search Media");
             System.out.println("2) Borrow Media");
             System.out.println("3) Return Media");
+            System.out.println("4) View Fine Summary");
             System.out.println("5) Pay Fine");
             System.out.println("0) Logout");
 
@@ -39,6 +41,9 @@ public class UserCLI {
                         break;
                     case 3:
                         returnMediaFlow();
+                        break;
+                    case 4:
+                        showFineSummary();
                         break;
                     case 5:
                         payFinesFlow();
@@ -79,6 +84,16 @@ public class UserCLI {
         int mediaId = InputHelper.readInt(in, "Media ID: ", 1, Integer.MAX_VALUE);
         boolean ok = user.returnMedia(mediaId);
         System.out.println(ok ? "Returned successfully." : "Could not return.");
+        InputHelper.pressEnterToContinue(in);
+    }
+    
+    private void showFineSummary() {
+        try {
+        	FineSummary summary = user.getFineSummary();
+            com.library.util.DisplayPrinter.printFineSummary(summary);
+        } catch (Exception e) {
+            System.out.println("Failed to load fine summary: " + e.getMessage());
+        }
         InputHelper.pressEnterToContinue(in);
     }
 

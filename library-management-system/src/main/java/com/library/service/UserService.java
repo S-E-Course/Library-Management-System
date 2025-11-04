@@ -7,6 +7,9 @@ import com.library.util.DatabaseConnection;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import com.library.dao.BorrowingDAO;
+import com.library.dao.FineDAO;
+import com.library.dao.MediaDAO;
 
 
 public class UserService {
@@ -118,6 +121,12 @@ public class UserService {
         if (loggedUser == null)
             throw new IllegalStateException("User not logged in.");
         return fineDAO.findFines(conn, userId);
+    }
+    
+    public FineSummary getFineSummary() throws Exception {
+        if (loggedUser == null) throw new IllegalStateException("User not logged in.");
+        FineReportService report = new FineReportService(conn, fineDAO, borrowingDAO, mediaDAO);
+        return report.buildFineSummaryForUser(loggedUser.getUserId());
     }
     
     

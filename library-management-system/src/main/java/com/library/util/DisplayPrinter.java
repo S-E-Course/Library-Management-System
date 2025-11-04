@@ -7,6 +7,7 @@ import com.library.dao.MediaDAO;
 import com.library.model.Borrowing;
 import com.library.model.Fine;
 import com.library.model.Media;
+import com.library.service.FineSummary;
 
 public class DisplayPrinter {
 	
@@ -67,5 +68,21 @@ public class DisplayPrinter {
         }
 
     }
+    
+    public static void printFineSummary(FineSummary s) {
+        System.out.println();
+        System.out.println("---- Overdue Fine Summary (by media type) ----");
+        if (s.getPerType().isEmpty()) {
+            System.out.println("No unpaid fines.");
+        } else {
+            s.getPerType().forEach((type, amt) ->
+                System.out.printf("  %-10s : %.2f%n", type, amt)
+            );
+            System.out.println("----------------------------------------------");
+            System.out.printf("  TOTAL      : %.2f%n", s.getTotal());
+        }
+        System.out.println();
+    }
+
 
 }
