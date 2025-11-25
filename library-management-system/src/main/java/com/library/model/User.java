@@ -2,17 +2,14 @@ package com.library.model;
 
 /**
  * User account entity.
- * Includes authentication fields, role, and an account balance used for fines.
- *
- * @author
- * @version 1.0
+ * Holds login details, role information, and account balance.
  */
 public class User {
     private int userId;
     private String username;
     private String email;
     private String passwordHash;
-    private String role;    // admin, librarian, user
+    private String role;
     private double balance;
 
     /** @return user identifier */
@@ -33,21 +30,21 @@ public class User {
     /** @param email email address */
     public void setEmail(String email) { this.email = email; }
 
-    /** @return password hash or plain value as stored */
+    /** @return stored password hash */
     public String getPasswordHash() { return passwordHash; }
 
-    /** @param passwordHash password hash or plain value as stored */
+    /** @param passwordHash stored password hash */
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
 
-    /** @return role string */
+    /** @return role value */
     public String getRole() { return role; }
 
-    /** @param role role string */
+    /** @param role role value */
     public void setRole(String role) { this.role = role; }
 
-    /** @return current account balance */
+    /** @return account balance */
     public double getBalance() { return balance; }
 
-    /** @param balance current account balance */
+    /** @param balance account balance */
     public void setBalance(double balance) { this.balance = balance; }
 }

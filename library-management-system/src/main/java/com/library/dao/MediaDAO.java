@@ -5,21 +5,17 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
- * DAO for creation,read,update,deletion, and lookup operations on media. Supports Book, CD, and Journal.
- *
- * @author
- * @version 1.0
+ * DAO for media operations. Supports adding, removing, searching,
  */
 public class MediaDAO {
 
     /**
-     * Inserts a new media item.
+     * Adds a new media item.
      *
      * @param conn active database connection
-     * @param media media to insert
-     * @return true if the row was inserted
+     * @param media media object to insert
+     * @return true if inserted
      * @throws Exception if a database error occurs
      */
     public boolean addMedia(Connection conn, Media media) throws Exception {
@@ -34,11 +30,11 @@ public class MediaDAO {
     }
 
     /**
-     * Deletes a media item by id.
+     * Removes a media item by id.
      *
      * @param conn active database connection
-     * @param mediaId media identifier
-     * @return true if a row was deleted
+     * @param mediaId media id
+     * @return true if deleted
      * @throws Exception if a database error occurs
      */
     public boolean removeMedia(Connection conn, int mediaId) throws Exception {
@@ -50,11 +46,11 @@ public class MediaDAO {
     }
 
     /**
-     * Searches media by keyword in title, author, or ISBN. Optionally filters by type.
+     * Searches media by keyword and optional type.
      *
      * @param conn active database connection
-     * @param keyword search fragment
-     * @param type media type value or media for all
+     * @param keyword search text
+     * @param type media type or "media" for all
      * @return list of matching media
      * @throws Exception if a database error occurs
      */
@@ -87,12 +83,12 @@ public class MediaDAO {
     }
 
     /**
-     * Updates the availability of a media item.
+     * Updates the availability of media.
      *
      * @param conn active database connection
-     * @param mediaId media identifier
-     * @param available true to set available, false to set borrowed
-     * @return true if a row was updated
+     * @param mediaId media id
+     * @param available true if available
+     * @return true if updated
      * @throws Exception if a database error occurs
      */
     public boolean setMediaStatus(Connection conn, int mediaId, boolean available) throws Exception {
@@ -108,9 +104,9 @@ public class MediaDAO {
      * Checks if a media item is available.
      *
      * @param conn active database connection
-     * @param mediaId media identifier
-     * @return true if available, false if not available
-     * @throws Exception if the media is not found or a database error occurs
+     * @param mediaId media id
+     * @return true if available
+     * @throws Exception if media is not found
      */
     public boolean mediaAvailable(Connection conn, int mediaId) throws Exception {
         String sql = "SELECT available FROM media WHERE media_id = ?";
@@ -126,7 +122,7 @@ public class MediaDAO {
      * Lists all media, optionally filtered by type.
      *
      * @param conn active database connection
-     * @param type media type value or media for all
+     * @param type media type or "media" for all
      * @return list of media
      * @throws Exception if a database error occurs
      */
@@ -153,11 +149,11 @@ public class MediaDAO {
     }
 
     /**
-     * Finds a media item by id.
+     * Finds media by id.
      *
      * @param conn active database connection
-     * @param mediaId media identifier
-     * @return the media item or null if not found
+     * @param mediaId media id
+     * @return media or null if not found
      * @throws Exception if a database error occurs
      */
     public Media findById(Connection conn, int mediaId) throws Exception {
@@ -173,11 +169,11 @@ public class MediaDAO {
     }
 
     /**
-     * Returns active borrowed media for a user.
+     * Returns the active borrowed media of a user.
      *
      * @param conn active database connection
-     * @param userId user identifier
-     * @return list of active media for the user
+     * @param userId user id
+     * @return list of active media
      * @throws Exception if a database error occurs
      */
     public List<Media> findActiveMedia(Connection conn, int userId) throws Exception {
@@ -199,11 +195,11 @@ public class MediaDAO {
     }
 
     /**
-     * Maps a result set row to a Media subclass instance.
+     * Creates a Media object from a database row.
      *
-     * @param rs result set positioned on a media row
-     * @return a Media instance
-     * @throws SQLException if a column read fails
+     * @param rs result set with media fields
+     * @return media instance
+     * @throws SQLException if a read fails
      */
     private Media mapRowToMedia(ResultSet rs) throws SQLException {
         String type = rs.getString("type");

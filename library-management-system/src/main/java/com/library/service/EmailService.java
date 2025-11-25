@@ -12,8 +12,8 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
 
 /**
- * SMTP mail sender used in production to deliver reminder emails (US3.1).
- * Uses Gmail SMTP with STARTTLS on port 587 and credentials provided by {@link DotenvEmailServer}.
+ * Sends real email messages using SMTP.
+ * This service uses Gmail's SMTP server with TLS.
  */
 public class EmailService {
 
@@ -21,9 +21,9 @@ public class EmailService {
     private final String password;
 
     /**
-     * Creates a new SMTP email service.
+     * Creates a new email service with the given credentials.
      *
-     * @param username SMTP username (email address)
+     * @param username SMTP login email
      * @param password SMTP password or app password
      */
     public EmailService(String username, String password) {
@@ -32,12 +32,12 @@ public class EmailService {
     }
 
     /**
-     * Sends a simple text email.
+     * Sends a basic text email.
      *
      * @param to      recipient email address
-     * @param subject email subject
+     * @param subject email subject line
      * @param body    email body text
-     * @throws RuntimeException if sending fails
+     * @throws RuntimeException if the email cannot be sent
      */
     public void sendEmail(String to, String subject, String body) {
         Properties props = new Properties();

@@ -10,20 +10,18 @@ import com.library.model.Media;
 import com.library.service.FineSummary;
 
 /**
- * Utility methods for printing lists and summaries to the console.
- * 
- * This class contains only static methods and is used by the CLI layer
- * to render media lists, borrowed items, fines, and mixed-media fine summaries.
+ * Console printing helpers for media lists, borrowings, fines,
+ * and fine summaries. Used by the CLI layer.
  */
 public class DisplayPrinter {
 
-    /** Data-access helper used to resolve media details when printing borrowings. */
+    /** DAO used to look up media details when printing borrowings. */
     private static final MediaDAO mediaDAO = new MediaDAO();
 
     /**
-     * Prints a formatted list of media items to standard output.
+     * Prints a list of media items. Shows a placeholder when empty.
      *
-     * @param mediaList list of media items to print; prints a placeholder if null or empty
+     * @param mediaList list of media items
      */
     public static void printMediaList(List<Media> mediaList) {
         if (mediaList == null || mediaList.isEmpty()) {
@@ -38,11 +36,10 @@ public class DisplayPrinter {
     }
 
     /**
-     * Prints the list of borrowed media for a user, including due date and status.
-     * Items with status "returned" are skipped.
+     * Prints borrowed media with due date and status. Skips returned items.
      *
-     * @param conn       active database connection used to resolve media details
-     * @param borrowings list of borrowing records to print
+     * @param conn _ active database connection
+     * @param borrowings list of borrowing records
      * @throws Exception if media lookup fails
      */
     public static void printBorrowedMedia(Connection conn, List<Borrowing> borrowings) throws Exception {
@@ -61,9 +58,9 @@ public class DisplayPrinter {
     }
 
     /**
-     * Prints a list of fines to standard output.
+     * Prints a list of fines.
      *
-     * @param fines list of fines to print; prints a placeholder if null or empty
+     * @param fines list of fines
      */
     public static void printFines(List<Fine> fines) {
         if (fines == null || fines.isEmpty()) {
@@ -82,10 +79,9 @@ public class DisplayPrinter {
     }
 
     /**
-     * Prints a user's mixed-media fine summary.
-     * Shows per-type totals followed by a grand total line.
+     * Prints a mixed-media fine summary with per-type totals and a final total.
      *
-     * @param s fine summary to print
+     * @param s fine summary
      */
     public static void printFineSummary(FineSummary s) {
         System.out.println();

@@ -1,19 +1,25 @@
 package com.library.app;
 
 /**
- * Console helpers for clearing the screen and printing titles.
+ * Utility class for printing menu screens and titles in the console.
  */
 public final class MenuPrinter {
+
     private MenuPrinter() {}
+
+    /**
+     * Clears the console output.
+     * Uses an ANSI escape sequence to move the cursor and wipe the screen.
+     */
     public static void clear() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
     }
 
     /**
-     * Prints a full banner with a title.
+     * Prints a large banner with a centered title.
      *
-     * @param title banner title
+     * @param title the banner text to show
      */
     public static void banner(String title) {
         System.out.println("==================================================");
@@ -22,9 +28,9 @@ public final class MenuPrinter {
     }
 
     /**
-     * Prints a section title line.
+     * Prints a simple section title.
      *
-     * @param title section title
+     * @param title the title to show
      */
     public static void title(String title) {
         System.out.println();

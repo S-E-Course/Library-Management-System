@@ -3,36 +3,36 @@ package com.library.service;
 import com.library.strategy.*;
 
 /**
- * Strategy-based fine calculator.
- * Delegates fine calculation to a provided {@link FineStrategy} implementation.
+ * Calculates fines using a selected fine strategy.
+ * The strategy decides how the fine is computed.
  */
 public class FineCalculator {
 
     private FineStrategy fineStrategy;
 
     /**
-     * Creates a calculator with the given fine strategy.
+     * Creates a calculator with an initial strategy.
      *
-     * @param fineStrategy strategy to use (e.g., book, cd, journal)
+     * @param fineStrategy strategy used for fine calculation
      */
     public FineCalculator(FineStrategy fineStrategy) {
         this.fineStrategy = fineStrategy;
     }
 
     /**
-     * Calculates a fine for the given number of overdue days using the current strategy.
+     * Computes the fine based on the number of overdue days.
      *
      * @param overdueDays number of days overdue
-     * @return fine amount calculated by the strategy
+     * @return fine amount
      */
     public int calculateFine(int overdueDays) {
         return fineStrategy.calculateFine(overdueDays);
     }
 
     /**
-     * Replaces the current fine strategy.
+     * Changes the strategy used for fine calculation.
      *
-     * @param fineStrategy new strategy to apply
+     * @param fineStrategy new strategy
      */
     public void setFineStrategy(FineStrategy fineStrategy) {
         this.fineStrategy = fineStrategy;

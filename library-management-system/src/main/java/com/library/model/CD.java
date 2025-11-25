@@ -1,11 +1,8 @@
 package com.library.model;
 
 /**
- * Concrete media type for compact discs.
- * Uses a borrow duration of seven days.
- *
- * @author
- * @version 1.0
+ * Media type representing a cd.
+ * Has a borrow duration of seven days.
  */
 public class CD extends Media {
 

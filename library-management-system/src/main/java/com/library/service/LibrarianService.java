@@ -13,9 +13,9 @@ import java.util.List;
 
 /**
  * Service for librarian actions such as:
- *  - login/logout
- *  - detecting overdue media
- *  - issuing fines using Strategy Pattern
+ * - login/logout
+ * - detecting overdue media
+ * - issuing fines using Strategy Pattern
  */
 public class LibrarianService {
     private final Connection conn;
@@ -25,11 +25,11 @@ public class LibrarianService {
     private final MediaDAO mediaDAO = new MediaDAO();
     private User loggedLibrarian;
 
-    /** Establish DB connection *//**
+    /**
      * Establishes a database connection for librarian operations.
-    *
-    * @throws Exception if connecting to the database fails
-    */
+     *
+     * @throws Exception if connecting to the database fails
+     */
     public LibrarianService() throws Exception {
         this.conn = DatabaseConnection.connect();
     }
@@ -88,12 +88,14 @@ public class LibrarianService {
                     long daysSinceLastFine = ChronoUnit.DAYS.between(existingFine.getFineDate(), today);
                     if (daysSinceLastFine < 1) continue;
 
-
-                    fineDAO.updateFineBalance(conn, existingFine.getId(), (int)daysSinceLastFine);
+                    fineDAO.updateFineBalance(conn, existingFine.getId(), (int) daysSinceLastFine);
                     fineDAO.updateFineDate(conn, existingFine.getId());
                     userDAO.updateUserBalance(conn, b.getUserId(), daysSinceLastFine);
-                    
-                    System.out.printf("Fine's amount updated for borrowId=%d (amount + %d NIS)%n", b.getBorrowId(), daysSinceLastFine);
+
+                    System.out.printf(
+                        "Fine's amount updated for borrowId=%d (amount + %d NIS)%n",
+                        b.getBorrowId(), daysSinceLastFine
+                    );
                     continue;
                 }
             }
@@ -116,17 +118,20 @@ public class LibrarianService {
                     fineCalculator = new FineCalculator(new BookFineStrategy());
                     break;
             }
+
             double fineAmount = fineCalculator.calculateFine((int) overdueDays);
             boolean issued = fineDAO.issueFine(conn, b.getBorrowId(), b.getUserId(), fineAmount);
 
             if (issued) {
-            	borrowingDAO.updateBorrowingStatus(conn, b.getBorrowId(), "overdue");
+                borrowingDAO.updateBorrowingStatus(conn, b.getBorrowId(), "overdue");
                 userDAO.updateUserBalance(conn, b.getUserId(), fineAmount);
-                System.out.printf("Issued new fine %.2f for borrowId=%d (overdue %d days)%n", fineAmount, b.getBorrowId(), overdueDays);
+                System.out.printf(
+                    "Issued new fine %.2f for borrowId=%d (overdue %d days)%n",
+                    fineAmount, b.getBorrowId(), overdueDays
+                );
             } else {
                 System.out.printf("Failed to issue fine for borrowId=%d%n", b.getBorrowId());
             }
         }
     }
-
 }

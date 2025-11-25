@@ -7,20 +7,19 @@ import com.library.model.User;
 import com.library.util.DatabaseConnection;
 
 /**
- * Service for authenticating users by username and password hash.
- * Returns the matching user when credentials are valid; otherwise returns null.
+ * Service that checks user login credentials.
+ * Looks up a user by username and compares the stored password hash.
  */
 public class AuthService {
     private final UserDAO userDAO = new UserDAO();
 
     /**
-     * Authenticates a user by username and password hash.
-     * Password matching is a direct equals check to the stored value.
+     * Verifies a username and password hash.
      *
-     * @param username     username
-     * @param passwordHash password hash to compare with the stored value
-     * @return user when valid, otherwise null
-     * @throws Exception if a data access error occurs
+     * @param username username to check
+     * @param passwordHash password hash to match
+     * @return the user if credentials match, or null if not valid
+     * @throws Exception if a database error occurs
      */
     public User authenticate(String username, String passwordHash) throws Exception {
         try (Connection conn = DatabaseConnection.connect()) {

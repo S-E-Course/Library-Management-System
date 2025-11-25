@@ -3,27 +3,27 @@ package com.library.service;
 import com.library.model.User;
 
 /**
- * Simple adapter that knows how to notify a {@link User} by email
- * using the provided {@link EmailServer}.
+ * Sends email notifications to users.
+ * Wraps an email server and provides a simple method to notify a user.
  */
 public class EmailNotifier {
     private final EmailServer server;
 
     /**
-     * Creates a notifier that delegates to the given server.
+     * Creates a notifier that uses the given email server.
      *
-     * @param server email server implementation
+     * @param server email server to send messages through
      */
     public EmailNotifier(EmailServer server) {
         this.server = server;
     }
 
     /**
-     * Sends a notification message to the user's email address.
-     * No email is sent if the user or their email is missing.
+     * Sends a reminder message to the user's email.
+     * Does nothing if the user or email address is missing.
      *
-     * @param user    recipient user
-     * @param message message body
+     * @param user_the user to notify
+     * @param message_the message body to send
      */
     public void notify(User user, String message) {
         if (user == null || user.getEmail() == null) return;

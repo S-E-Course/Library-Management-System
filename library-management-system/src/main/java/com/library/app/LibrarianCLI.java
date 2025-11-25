@@ -4,18 +4,17 @@ import com.library.service.LibrarianService;
 import java.util.Scanner;
 
 /**
- * Command-line interface for librarian workflows.
- * Provides actions for overdue detection and fine issuing.
+ * Command-line menu for librarian actions.
  */
 public class LibrarianCLI {
     private final Scanner in;
     private final LibrarianService librarian;
 
     /**
-     * Creates a new LibrarianCLI.
+     * Creates a new librarian menu.
      *
-     * @param in console scanner
-     * @param librarian librarian service instance
+     * @param in scanner for input
+     * @param librarian service for librarian features
      */
     public LibrarianCLI(Scanner in, LibrarianService librarian) {
         this.in = in;
@@ -23,7 +22,7 @@ public class LibrarianCLI {
     }
 
     /**
-     * Runs the librarian interaction loop until logout.
+     * Runs the menu until the librarian logs out.
      */
     public void run() {
         while (true) {
@@ -51,9 +50,9 @@ public class LibrarianCLI {
     }
 
     /**
-     * Runs overdue detection and fine issuing.
+     * Detects overdue media and issues fines.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if the service fails
      */
     private void detectOverdueFlow() throws Exception {
         MenuPrinter.title("Detect Overdue & Issue Fines");

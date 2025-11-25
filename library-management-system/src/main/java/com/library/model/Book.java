@@ -1,21 +1,16 @@
 package com.library.model;
 
 /**
- * Concrete media type for books.
- * Uses a borrow duration of twenty eight days.
- *
- * @author
- * @version 1.0
+ * Media type representing a book.
+ * A book can be borrowed for 28 days.
  */
 public class Book extends Media {
 
-    /** {@inheritDoc} */
     @Override
     public String getType() {
         return "book";
     }
 
-    /** {@inheritDoc} */
     @Override
     public int getBorrowDurationDays() {
         return 28;

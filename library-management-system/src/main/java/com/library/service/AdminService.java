@@ -9,9 +9,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Service for administrator workflows.
- * Provides operations to manage media and users and to trigger overdue reminders (US3.1).
- * This class keeps a database connection open for its operations.
+ * Service for administrator tasks.
+ * Handles media management, user management, and overdue reminder actions.
  */
 public class AdminService {
 
@@ -22,20 +21,20 @@ public class AdminService {
     BorrowingDAO borrowingDAO = new BorrowingDAO();
 
     /**
-     * Initializes a new AdminService with a database connection.
+     * Creates a new AdminService and opens a database connection.
      *
-     * @throws Exception if a database connection cannot be open
+     * @throws Exception if the connection cannot be opened
      */
     public AdminService() throws Exception {
         this.conn = DatabaseConnection.connect();
     }
 
     /**
-     * Logs in an administrator with a given username and password hash.
+     * Logs in an administrator.
      *
-     * @param username     the admin’s username
-     * @param passwordHash the hashed password
-     * @return true if login was successful
+     * @param username admin username
+     * @param passwordHash stored password value
+     * @return true if login succeeds
      * @throws Exception if a database error occurs
      */
     public boolean login(String username, String passwordHash) throws Exception {
@@ -48,9 +47,9 @@ public class AdminService {
     }
 
     /**
-     * Logs out the currently logged-in administrator and disconnects from the database.
+     * Logs out the administrator and closes the connection.
      *
-     * @throws SQLException if an error occurs while closing the connection
+     * @throws SQLException if disconnect fails
      */
     public void logout() throws SQLException {
         loggedAdmin = null;
@@ -58,7 +57,7 @@ public class AdminService {
     }
 
     /**
-     * Checks if an admin is currently logged in.
+     * Checks if an admin is logged in.
      *
      * @return true if an admin is logged in
      */
@@ -67,11 +66,11 @@ public class AdminService {
     }
 
     /**
-     * Adds a new media item (Book, CD, or Journal) to the library database.
+     * Adds a media item.
      *
-     * @param media the media object to add
-     * @return true if the operation was successful
-     * @throws Exception if an error occurs or admin is not logged in
+     * @param media media object
+     * @return true if added
+     * @throws Exception if not logged in or a database error occurs
      */
     public boolean addMedia(Media media) throws Exception {
         if (loggedAdmin == null)
@@ -80,11 +79,11 @@ public class AdminService {
     }
 
     /**
-     * Searches for media records by keyword and type.
+     * Searches media by keyword and type.
      *
-     * @param keyword the keyword to search in title, author, or ISBN
-     * @param type    media type filter ("book", "cd", "journal", or "media" for all)
-     * @return a list of matching media items
+     * @param keyword search text
+     * @param type media type or media for all
+     * @return list of matching media
      * @throws Exception if a database error occurs
      */
     public List<Media> searchMedia(String keyword, String type) throws Exception {
@@ -94,9 +93,9 @@ public class AdminService {
     /**
      * Removes a media item if it is available.
      *
-     * @param mediaId the ID of the media item to remove
-     * @return true if the media was removed, false if it is borrowed
-     * @throws Exception if a database error occurs or admin not logged in
+     * @param mediaId media identifier
+     * @return true if removed
+     * @throws Exception if not logged in or a database error occurs
      */
     public boolean removeMedia(int mediaId) throws Exception {
         if (loggedAdmin == null)
@@ -109,10 +108,10 @@ public class AdminService {
     }
 
     /**
-     * Lists all media items of a given type.
+     * Lists all media filtered by type.
      *
-     * @param type media type filter ("book", "cd", "journal", or "media" for all)
-     * @return list of media items
+     * @param type media type or media for all
+     * @return list of media
      * @throws Exception if a database error occurs
      */
     public List<Media> listAllMedia(String type) throws Exception {
@@ -120,14 +119,14 @@ public class AdminService {
     }
 
     /**
-     * Adds a new user to the system.
+     * Adds a user.
      *
-     * @param username     username of the new user
-     * @param email        email address
-     * @param passwordHash hashed password
-     * @param role         user role ("admin", "librarian", "user")
-     * @return true if successfully added
-     * @throws Exception if admin not logged in or a database error occurs
+     * @param username username
+     * @param email email
+     * @param passwordHash stored password
+     * @param role user role
+     * @return true if added
+     * @throws Exception if not logged in or a database error occurs
      */
     public boolean addUser(String username, String email, String passwordHash, String role) throws Exception {
         if (loggedAdmin == null)
@@ -144,11 +143,11 @@ public class AdminService {
     }
 
     /**
-     * Deletes a user account by ID.
+     * Deletes a user if no balance or active media exist.
      *
-     * @param userId ID of the user to remove
-     * @return true if the user was successfully deleted
-     * @throws Exception if admin not logged in or a database error occurs
+     * @param userId user identifier
+     * @return true if deleted
+     * @throws Exception if not logged in or a database error occurs
      */
     public boolean removeUser(int userId) throws Exception {
         if (loggedAdmin == null)
@@ -170,10 +169,10 @@ public class AdminService {
     }
 
     /**
-     * Returns a list of all users in the system.
+     * Lists all users.
      *
-     * @return list of user objects
-     * @throws Exception if admin not logged in or a database error occurs
+     * @return list of users
+     * @throws Exception if not logged in or a database error occurs
      */
     public List<User> listUsers() throws Exception {
         if (loggedAdmin == null)
@@ -182,11 +181,10 @@ public class AdminService {
     }
 
     /**
-     * US3.1 — Sends overdue reminders using credentials from .env.
-     * This is called by the Admin menu action "Send Overdue Reminders".
+     * Sends overdue reminders using .env settings.
      *
-     * @return number of distinct users who were notified
-     * @throws Exception on DB or email errors
+     * @return number of users notified
+     * @throws Exception if sending fails
      */
     public int sendOverdueRemindersFromEnv() throws Exception {
         EmailServer emailServer = new DotenvEmailServer();
@@ -196,12 +194,11 @@ public class AdminService {
     }
 
     /**
-     * Sends overdue reminders using a provided email server.
-     * This helper is intended for unit tests with a mock email server.
+     * Sends overdue reminders using a given email server.
      *
-     * @param emailServer server used to send emails
-     * @return number of distinct users who were notified
-     * @throws Exception on DB or email errors
+     * @param emailServer email server to use
+     * @return number of users notified
+     * @throws Exception if sending fails
      */
     public int sendOverdueReminders(EmailServer emailServer) throws Exception {
         EmailNotifier notifier = new EmailNotifier(emailServer);

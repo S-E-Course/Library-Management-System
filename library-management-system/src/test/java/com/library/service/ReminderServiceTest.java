@@ -16,71 +16,64 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for reminder email behavior.
- * 
- * Verifies that overdue borrowings are grouped per user and that the reminder
- * messages recorded by the mock email server match the required format:
- * "You have n overdue book(s)."
- * 
- * This test uses Mockito to fake DAO calls and {@link MockEmailServer} to capture
- * emails instead of sending real messages.
+ * Tests sending overdue reminders using mocked DAO and email server.
  */
 class ReminderServiceTest {
 
     /**
-     * Ensures the reminder service:
-     * 1) counts overdue items per user correctly,
-     * 2) records exactly the expected emails in the mock server,
-     * 3) uses the required subject and body text.
+     * Tests that reminders are sent to the correct users with the correct counts.
      *
-     * Scenario:
-     * - user 1 has two overdue items
-     * - user 2 has one overdue item
-     *
-     * @throws Exception if the service invocation fails
+     * @throws Exception if DAO calls fail
      */
     @Test
-    void sendsExpectedMessageAndRecordsEmails() throws Exception {
-        Connection conn = null; // not used by mocks
+    void sendsExpectedOverdueReminders() throws Exception {
+        Connection conn = null;
+
         BorrowingDAO borrowingDAO = mock(BorrowingDAO.class);
         UserDAO userDAO = mock(UserDAO.class);
-        MockEmailServer mockServer = new MockEmailServer();
+        EmailServer emailServer = mock(EmailServer.class);
 
-        // Prepare borrowings: user1 has 2 overdue; user2 has 1 overdue
-        Borrowing b1 = new Borrowing(); b1.setUserId(1); b1.setStatus("overdue"); b1.setDueDate(LocalDate.now().minusDays(3));
-        Borrowing b2 = new Borrowing(); b2.setUserId(1); b2.setStatus("borrowed"); b2.setDueDate(LocalDate.now().minusDays(1));
-        Borrowing b3 = new Borrowing(); b3.setUserId(2); b3.setStatus("overdue"); b3.setDueDate(LocalDate.now().minusDays(5));
+        Borrowing b1 = new Borrowing();
+        b1.setUserId(1);
+        b1.setStatus("overdue");
+        b1.setDueDate(LocalDate.now().minusDays(3));
+
+        Borrowing b2 = new Borrowing();
+        b2.setUserId(1);
+        b2.setStatus("borrowed");
+        b2.setDueDate(LocalDate.now().minusDays(1));
+
+        Borrowing b3 = new Borrowing();
+        b3.setUserId(2);
+        b3.setStatus("overdue");
+        b3.setDueDate(LocalDate.now().minusDays(5));
 
         List<Borrowing> list = Arrays.asList(b1, b2, b3);
         when(borrowingDAO.findOverdueMedia(conn)).thenReturn(list);
 
-        User u1 = new User(); u1.setUserId(1); u1.setEmail("u1@example.com");
-        User u2 = new User(); u2.setUserId(2); u2.setEmail("u2@example.com");
+        User u1 = new User();
+        u1.setUserId(1);
+        u1.setEmail("u1@example.com");
+
+        User u2 = new User();
+        u2.setUserId(2);
+        u2.setEmail("u2@example.com");
+
         when(userDAO.findById(conn, 1)).thenReturn(u1);
         when(userDAO.findById(conn, 2)).thenReturn(u2);
 
-        ReminderService service = new ReminderService(conn, borrowingDAO, userDAO, new EmailNotifier(mockServer));
+        ReminderService service =
+                new ReminderService(conn, borrowingDAO, userDAO, new EmailNotifier(emailServer));
 
-        Map<Integer,Integer> counts = service.sendOverdueReminders();
+        Map<Integer, Integer> counts = service.sendOverdueReminders();
 
-        // Assert counts
         assertEquals(2, counts.get(1));
         assertEquals(1, counts.get(2));
 
-        // Mock email server recorded exactly 2 emails
-        assertEquals(2, mockServer.getOutbox().size());
-
-        // Verify messages
-        boolean foundU1 = mockServer.getOutbox().stream().anyMatch(e ->
-                e.to.equals("u1@example.com") &&
-                e.subject.equals("Overdue Reminder") &&
-                e.body.equals("You have 2 overdue book(s)."));
-        boolean foundU2 = mockServer.getOutbox().stream().anyMatch(e ->
-                e.to.equals("u2@example.com") &&
-                e.subject.equals("Overdue Reminder") &&
-                e.body.equals("You have 1 overdue book(s)."));
-
-        assertTrue(foundU1, "Email to user 1 not as expected");
-        assertTrue(foundU2, "Email to user 2 not as expected");
-    } 
+        verify(emailServer, times(1))
+                .send("u1@example.com", "Overdue Reminder", "You have 2 overdue book(s).");
+        verify(emailServer, times(1))
+                .send("u2@example.com", "Overdue Reminder", "You have 1 overdue book(s).");
+        verifyNoMoreInteractions(emailServer);
+    }
 }

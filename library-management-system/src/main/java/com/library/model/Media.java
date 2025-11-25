@@ -1,12 +1,8 @@
 package com.library.model;
 
 /**
- * Base class for library media.
- * Subclasses represent concrete types such as Book, CD, and Journal.
- * A media item is available when it can be borrowed.
- *
- * @author
- * @version 1.0
+ * Base class for media items.
+ * Subclasses provide specific types such as book, cd, or journal.
  */
 public abstract class Media {
     private int id;
@@ -16,41 +12,41 @@ public abstract class Media {
     private boolean available = true;
 
     /**
-     * Returns a lowercase type name such as book, cd, or journal.
+     * Returns the media type name in lowercase.
      *
-     * @return media type name
+     * @return type name
      */
     public abstract String getType();
 
     /**
-     * Returns the default borrow duration in days for this media type.
+     * Returns the borrow duration in days.
      *
-     * @return number of days the item may be borrowed
+     * @return number of days allowed
      */
     public abstract int getBorrowDurationDays();
 
-    /** @return database identifier */
+    /** @return item identifier */
     public int getId() { return id; }
 
-    /** @param id database identifier */
+    /** @param id item identifier */
     public void setId(int id) { this.id = id; }
 
-    /** @return title */
+    /** @return title text */
     public String getTitle() { return title; }
 
-    /** @param title title */
+    /** @param title title text */
     public void setTitle(String title) { this.title = title; }
 
-    /** @return author */
+    /** @return author name */
     public String getAuthor() { return author; }
 
-    /** @param author author */
+    /** @param author author name */
     public void setAuthor(String author) { this.author = author; }
 
-    /** @return ISBN string */
+    /** @return ISBN value */
     public String getIsbn() { return isbn; }
 
-    /** @param isbn ISBN string */
+    /** @param isbn ISBN value */
     public void setIsbn(String isbn) { this.isbn = isbn; }
 
     /** @return true if available to borrow */

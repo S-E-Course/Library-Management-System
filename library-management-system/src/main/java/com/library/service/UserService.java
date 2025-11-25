@@ -9,8 +9,8 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Service for end-user workflows: login, search, borrow and return media,
- * paying fines, and generating the US5.3 mixed-media fine summary.
+ * Service for end-user actions: login, search, borrow, return,
+ * paying fines, and creating the mixed-media fine summary (US5.3).
  */
 public class UserService {
     private Connection conn;
@@ -21,21 +21,21 @@ public class UserService {
     private User loggedUser;
 
     /**
-     * Establishes a database connection for user operations.
+     * Opens a database connection for user operations.
      *
-     * @throws Exception if connecting to the database fails
+     * @throws Exception if the connection fails
      */
     public UserService() throws Exception {
         this.conn = DatabaseConnection.connect();
     }
 
     /**
-     * Logs in a user using username and password hash.
+     * Logs in a user with username and password hash.
      *
-     * @param username     account username
-     * @param passwordHash password hash to compare
-     * @return true if authenticated
-     * @throws Exception if a data access error occurs
+     * @param username login name
+     * @param passwordHash password hash to check
+     * @return true when valid
+     * @throws Exception if reading user data fails
      */
     public boolean login(String username, String passwordHash) throws Exception {
         User user = userDAO.findByUsername(conn, username);
@@ -47,9 +47,9 @@ public class UserService {
     }
 
     /**
-     * Logs out the current user and closes the shared database connection.
+     * Logs out and closes the shared connection.
      *
-     * @throws SQLException if disconnect fails
+     * @throws SQLException if closing fails
      */
     public void logout() throws SQLException {
         loggedUser = null;
@@ -57,24 +57,25 @@ public class UserService {
     }
 
     /**
-     * Searches for media (books, CDs, journals).
+     * Searches for media records.
      *
-     * @param keyword text to search (title, author, ISBN)
-     * @param type    "book", "cd", "journal", or "media" for all
-     * @return list of results matching the query
-     * @throws Exception if a data access error occurs
+     * @param keyword text to match
+     * @param type media type or "media" for all
+     * @return matching media list
+     * @throws Exception if data access fails
      */
     public List<Media> searchMedia(String keyword, String type) throws Exception {
         return mediaDAO.searchMedia(conn, keyword, type);
     }
 
     /**
-     * Borrows media for the logged-in user if:
-     * the user is logged in, the media is available, and the user has no unpaid balance.
+     * Borrows a media item for the logged-in user.
+     * Borrowing is allowed only if the user has no unpaid balance
+     * and no overdue media.
      *
-     * @param mediaId media identifier to borrow
-     * @return true if the borrow operation succeeds
-     * @throws Exception if preconditions fail or a data access error occurs
+     * @param mediaId id of the media to borrow
+     * @return true if borrowed
+     * @throws Exception if the user is not logged in or borrowing fails
      */
     public boolean borrowMedia(int mediaId) throws Exception {
         if (loggedUser == null)
@@ -96,6 +97,10 @@ public class UserService {
             System.out.println("User has unpaid balance and cannot borrow.");
             return false;
         }
+        if (borrowingDAO.hasOverdueForUser(conn, loggedUser.getUserId())) {
+            System.out.println("You have overdue borrowed items. Cannot borrow new media.");
+            return false;
+        }
 
         return borrowingDAO.borrowMedia(conn, loggedUser.getUserId(), mediaId);
     }
@@ -103,9 +108,9 @@ public class UserService {
     /**
      * Returns a borrowed media item for the logged-in user.
      *
-     * @param mediaId media identifier to return
-     * @return true if the return succeeds
-     * @throws Exception if not logged in or on data access error
+     * @param mediaId id of media to return
+     * @return true if returned
+     * @throws Exception if not logged in or return fails
      */
     public boolean returnMedia(int mediaId) throws Exception {
         if (loggedUser == null)
@@ -115,12 +120,12 @@ public class UserService {
     }
 
     /**
-     * Pays fines partially or fully and updates the user's balance.
+     * Pays a fine partly or fully.
      *
-     * @param fineId fine identifier to pay
+     * @param fineId id of the fine
      * @param amount amount to pay
-     * @return true if the payment is applied
-     * @throws Exception if not logged in or on data access error
+     * @return true if applied
+     * @throws Exception if not logged in or payment fails
      */
     public boolean payFine(int fineId, double amount) throws Exception {
         if (loggedUser == null)
@@ -130,30 +135,29 @@ public class UserService {
     }
 
     /**
-     * Returns the currently logged-in user or null if not authenticated.
+     * Returns the logged-in user.
      *
-     * @return current user or null
+     * @return user or null
      */
     public User getLoggedUser() {
         return loggedUser;
     }
 
     /**
-     * Exposes the underlying connection used by this service.
-     * Intended for read-only display helpers.
+     * Returns the connection used by this service.
      *
-     * @return connection in use
+     * @return SQL connection
      */
     public Connection getUserConnection() {
         return conn;
     }
 
     /**
-     * Returns borrowings for the given user id.
+     * Gets borrowings for a specific user.
      *
-     * @param userId user to query
+     * @param userId user id
      * @return list of borrowings
-     * @throws Exception if not logged in or on data access error
+     * @throws Exception if not logged in or reading fails
      */
     public List<Borrowing> findBorrowings(int userId) throws Exception {
         if (loggedUser == null)
@@ -162,11 +166,11 @@ public class UserService {
     }
 
     /**
-     * Returns fines for the given user id.
+     * Gets fines for a specific user.
      *
-     * @param userId user to query
+     * @param userId user id
      * @return list of fines
-     * @throws Exception if not logged in or on data access error
+     * @throws Exception if not logged in or reading fails
      */
     public List<Fine> findFines(int userId) throws Exception {
         if (loggedUser == null)
@@ -175,11 +179,10 @@ public class UserService {
     }
 
     /**
-     * US5.3 — Returns a mixed-media fine summary for the currently logged-in user.
-     * Aggregates unpaid fines per media type (e.g., book, cd, journal) and total.
+     * Builds a mixed-media fine summary for the logged-in user (US5.3).
      *
-     * @return a {@link FineSummary} for the logged-in user
-     * @throws Exception if not logged in or on database error
+     * @return fine summary
+     * @throws Exception if not logged in or reading fails
      */
     public FineSummary getFineSummary() throws Exception {
         if (loggedUser == null) throw new IllegalStateException("User not logged in.");
@@ -188,48 +191,42 @@ public class UserService {
     }
 
     /**
-     * Sets the current logged-in user.
-     * Intended for tests.
+     * Sets the logged-in user (testing use only).
      *
-     * @param user user to set as logged in
+     * @param user user to set
      */
     protected void setLoggedUser(User user) { this.loggedUser = user; }
 
     /**
-     * Overrides the user DAO dependency.
-     * Intended for tests.
+     * Replaces the user DAO (testing use only).
      *
-     * @param dao user DAO
+     * @param dao override value
      */
     protected void setUserDAO(UserDAO dao) { this.userDAO = dao; }
 
     /**
-     * Overrides the media DAO dependency.
-     * Intended for tests.
+     * Replaces the media DAO (testing use only).
      *
-     * @param dao media DAO
+     * @param dao override value
      */
     protected void setMediaDAO(MediaDAO dao) { this.mediaDAO = dao; }
 
     /**
-     * Overrides the borrowing DAO dependency.
-     * Intended for tests.
+     * Replaces the borrowing DAO (testing use only).
      *
-     * @param dao borrowing DAO
+     * @param dao override value
      */
     protected void setBorrowingDAO(BorrowingDAO dao) { this.borrowingDAO = dao; }
 
     /**
-     * Overrides the fine DAO dependency.
-     * Intended for tests.
+     * Replaces the fine DAO (testing use only).
      *
-     * @param dao fine DAO
+     * @param dao override value
      */
     protected void setFineDAO(FineDAO dao) { this.fineDAO = dao; }
 
     /**
-     * Overrides the SQL connection.
-     * Intended for tests.
+     * Replaces the SQL connection (testing use only).
      *
      * @param c connection to set
      */

@@ -11,18 +11,17 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Command-line interface for end users.
- * Provides search, borrow, return, fine summary, and fine payment actions.
+ * Command-line menu for normal users.
  */
 public class UserCLI {
     private final Scanner in;
     private final UserService user;
 
     /**
-     * Creates a new UserCLI.
+     * Builds a user menu handler.
      *
-     * @param in console scanner
-     * @param user user service
+     * @param in   console scanner
+     * @param user user service to use
      */
     public UserCLI(Scanner in, UserService user) {
         this.in = in;
@@ -30,7 +29,7 @@ public class UserCLI {
     }
 
     /**
-     * Runs the user interaction loop until logout.
+     * Shows the user menu and handles choices until logout.
      */
     public void run() {
         while (true) {
@@ -74,9 +73,9 @@ public class UserCLI {
     }
 
     /**
-     * Prompts for type and keyword, then displays search results.
+     * Reads search input and prints matching media.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if a service error happens
      */
     private void searchMediaFlow() throws Exception {
         MenuPrinter.title("Search Media");
@@ -88,9 +87,9 @@ public class UserCLI {
     }
 
     /**
-     * Prompts for media id and attempts to borrow it.
+     * Reads a media id and tries to borrow it for the user.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if a service error happens
      */
     private void borrowMediaFlow() throws Exception {
         MenuPrinter.title("Borrow Media");
@@ -101,9 +100,9 @@ public class UserCLI {
     }
 
     /**
-     * Shows a list of borrowed media and prompts for which to return.
+     * Shows borrowed media and lets the user choose one to return.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if a service error happens
      */
     private void returnMediaFlow() throws Exception {
         MenuPrinter.title("Return Media ----\n---- Borrowed Media");
@@ -116,7 +115,7 @@ public class UserCLI {
     }
 
     /**
-     * Shows the mixed-media fine summary for the logged-in user.
+     * Shows the current fine summary for the logged-in user.
      */
     private void showFineSummary() {
         try {
@@ -129,9 +128,9 @@ public class UserCLI {
     }
 
     /**
-     * Prompts for a fine and amount and attempts to pay it.
+     * Reads fine payment details and tries to pay the fine.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if a service error happens
      */
     private void payFinesFlow() throws Exception {
         MenuPrinter.title("Pay Fine");

@@ -2,18 +2,15 @@ package com.library.strategy;
 
 /**
  * Fine strategy for books.
- * The policy charges a flat rate of 10 NIS per overdue day.
- *
- * @author
- * @version 1.0
+ * Charges 10 NIS for each overdue day.
  */
 public class BookFineStrategy implements FineStrategy {
 
     /**
-     * Calculates the fine for an overdue book.
+     * Returns the fine amount for an overdue book.
      *
-     * @param overdueDays number of days the book is overdue
-     * @return total fine amount in NIS (overdueDays * 10)
+     * @param overdueDays number of overdue days
+     * @return fine amount in NIS
      */
     public int calculateFine(int overdueDays) {
         return overdueDays * 10;

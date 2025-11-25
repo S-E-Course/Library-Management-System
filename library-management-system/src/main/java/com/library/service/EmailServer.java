@@ -1,17 +1,17 @@
 package com.library.service;
 
 /**
- * Minimal email-sending abstraction used by production and test code.
- * Implementations may deliver messages via SMTP or capture them in-memory.
+ * Basic interface for sending email messages.
+ * Different implementations may send real emails or store them for testing.
  */
 public interface EmailServer {
 
     /**
-     * Sends a plain text message.
+     * Sends a plain text email message.
      *
      * @param to      recipient email address
      * @param subject subject line
-     * @param body    message body text
+     * @param body    message body
      */
     void send(String to, String subject, String body);
 }

@@ -3,21 +3,18 @@ package com.library.service;
 import io.github.cdimascio.dotenv.Dotenv;
 
 /**
- * Loads SMTP credentials from a .env file and provides a configured {@link EmailServer}.
- * It looks for EMAIL_USERNAME and EMAIL_PASSWORD. The .env file can be placed
- * on the application classpath (for example target/classes/.env).
- *
- * Use {@link #send(String, String, String)} to send messages via the underlying mailer.
+ * Email server that reads SMTP credentials from a .env file.
+ * Looks for EMAIL_USERNAME and EMAIL_PASSWORD and uses them to
+ * configure an EmailService instance.
  */
 public class DotenvEmailServer implements EmailServer {
 
     private final EmailService emailService;
 
     /**
-     * Creates an instance wired with credentials from .env.
-     * Uses a fallback search order to locate the .env file.
+     * Loads credentials from the .env file and creates the email service.
      *
-     * @throws IllegalStateException if the required variables are missing
+     * @throws IllegalStateException if required fields are missing
      */
     public DotenvEmailServer() {
         Dotenv dotenv = tryLoad();
@@ -31,10 +28,9 @@ public class DotenvEmailServer implements EmailServer {
     }
 
     /**
-     * Attempts to load the .env file from several common locations.
+     * Tries to load a .env file from a knwon psth.
      *
-     * @return a loaded {@link Dotenv} instance
-     * @throws RuntimeException if the file cannot be loaded
+     * @return loaded Dotenv instance
      */
     private Dotenv tryLoad() {
         try {
@@ -43,18 +39,15 @@ public class DotenvEmailServer implements EmailServer {
         try {
             return Dotenv.configure().directory("target/classes").load();
         } catch (Exception ignored) {}
-        try {
-            return Dotenv.configure().directory("src/main/resources").load();
-        } catch (Exception ignored) {}
-        return Dotenv.configure().load(); // intentionally throws if still missing
+        return Dotenv.configure().load();
     }
 
     /**
-     * Sends an email using the underlying {@link EmailService}.
+     * Sends an email using the configured EmailService.
      *
-     * @param to      recipient address
-     * @param subject subject line
-     * @param body    plain text body
+     * @param to recipient email
+     * @param subject email subject
+     * @param body email body text
      */
     @Override
     public void send(String to, String subject, String body) {

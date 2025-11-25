@@ -4,20 +4,20 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
- * Utility methods for validated console input.
- * Provides reading of ints, doubles, non-empty strings, and pause prompts.
+ * Helper methods for reading validated input from the console.
  */
 public final class InputHelper {
     private InputHelper() {}
 
     /**
-     * Reads an integer within bounds.
+     * Reads an integer within the given range.  
+     * Keeps asking until the input is valid.
      *
-     * @param in scanner
-     * @param prompt text
-     * @param min minimum value inclusive
-     * @param max maximum value inclusive
-     * @return parsed integer
+     * @param in scanner for input
+     * @param prompt text to show
+     * @param min lowest allowed value
+     * @param max highest allowed value
+     * @return the valid integer
      */
     public static int readInt(Scanner in, String prompt, int min, int max) {
         while (true) {
@@ -41,10 +41,11 @@ public final class InputHelper {
 
     /**
      * Reads a non-empty line of text.
+     * Repeats until the user enters a non-blank value.
      *
-     * @param in scanner
-     * @param prompt text
-     * @return non-empty string
+     * @param in scanner for input
+     * @param prompt text to show
+     * @return the non-empty string
      */
     public static String readNonEmpty(Scanner in, String prompt) {
         while (true) {
@@ -58,20 +59,21 @@ public final class InputHelper {
     }
 
     /**
-     * Reads a password string. Uses the same logic as readNonEmpty.
+     * Reads a password string.
+     * Works the same as reading a non-empty text.
      *
-     * @param in scanner
-     * @param prompt text
-     * @return password string
+     * @param in scanner for input
+     * @param prompt text to show
+     * @return the password string
      */
     public static String readPassword(Scanner in, String prompt) {
         return readNonEmpty(in, prompt);
     }
 
     /**
-     * Prompts the user to press Enter and consumes a line.
+     * Waits for the user to press ENTER.
      *
-     * @param in scanner
+     * @param in scanner for input
      */
     public static void pressEnterToContinue(Scanner in) {
         System.out.print("Press ENTER to continue...");
@@ -79,13 +81,14 @@ public final class InputHelper {
     }
 
     /**
-     * Reads a double within bounds.
+     * Reads a double within the given range.
+     * Keeps asking until the input is valid.
      *
-     * @param in scanner
-     * @param prompt text
-     * @param min minimum value inclusive
-     * @param max maximum value inclusive
-     * @return parsed double
+     * @param in scanner for input
+     * @param prompt text to show
+     * @param min lowest allowed value
+     * @param max highest allowed value
+     * @return the valid double value
      */
 	public static double readDouble(Scanner in, String prompt, double min, double max) {
         while (true) {

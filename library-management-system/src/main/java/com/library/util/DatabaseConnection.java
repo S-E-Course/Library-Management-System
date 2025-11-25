@@ -1,4 +1,3 @@
-
 package com.library.util;
 
 import java.sql.Connection;
@@ -9,24 +8,24 @@ import java.io.InputStream;
 import java.io.IOException;
 
 /**
- * Reads db.properties from classpath (src/main/resources or resources on build).
- * Provides a shared Connection. Safe to call multiple times.
+ * Loads database settings from db.properties and provides a shared connection.
  */
 public class DatabaseConnection {
     private static Connection connection;
+
     /**
-     * Connects to the database using configuration from db.properties.
-     * 
-     * If a connection already exists and is open, it will reuse it.
-     * 
-     * @return a valid SQL Connection
-     * @throws SQLException if a database access error occurs
-     * @throws IOException if the db.properties file cannot be found or read
+     * Opens a database connection using values from db.properties.
+     * Reuses the connection if it is already open.
+     *
+     * @return active SQL connection
+     * @throws SQLException on database errors
+     * @throws IOException if the properties file cannot be read
      */
     public static Connection connect() throws SQLException, IOException {
         if (connection == null || connection.isClosed()) {
             Properties props = new Properties();
-            try (InputStream input = DatabaseConnection.class.getClassLoader().getResourceAsStream("db.properties")) {
+            try (InputStream input =
+                     DatabaseConnection.class.getClassLoader().getResourceAsStream("db.properties")) {
                 if (input == null) {
                     throw new IOException("db.properties not found on classpath");
                 }
@@ -40,15 +39,26 @@ public class DatabaseConnection {
         }
         return connection;
     }
-    
+
     /**
-     * Closes the active database connection if it is currently open.
-     * 
-     * @throws SQLException if closing the connection fails
+     * Closes the active connection if it is open.
+     *
+     * @throws SQLException if closing fails
      */
     public static void disconnect() throws SQLException {
         if (connection != null && !connection.isClosed()) {
             connection.close();
         }
     }
+    
+    /**
+     * Sets a mock connection for testing.
+     *
+     * @param c _ the mock connection to use
+     */
+    public static void setMockConnection(Connection c) {
+        connection = c;
+    }
+
+
 }

@@ -10,12 +10,13 @@ import com.library.util.DatabaseConnection;
 import java.util.Scanner;
 
 /**
- * Application entry point and role router.
- * Opens a database connection, authenticates the user, and runs the role-specific CLI.
+ * Main entry point of the program.
+ * Connects to the database, logs in the user, and starts the menu for the user's role.
  */
 public class Main {
+
     /**
-     * Starts the application.
+     * Starts the application and keeps asking for login.
      *
      * @param args command line arguments
      */
@@ -72,12 +73,12 @@ public class Main {
     }
 
     /**
-     * Runs an admin session.
+     * Starts the admin session and shows the admin menu.
      *
-     * @param in console scanner
+     * @param in scanner for input
      * @param username admin username
      * @param password admin password
-     * @throws Exception if a service error occurs
+     * @throws Exception if a service error happens
      */
     private static void runAdmin(Scanner in, String username, String password) throws Exception {
         AdminService adminService = new AdminService();
@@ -97,12 +98,12 @@ public class Main {
     }
 
     /**
-     * Runs a librarian session.
+     * Starts the librarian session and shows the librarian menu.
      *
-     * @param in console scanner
+     * @param in scanner for input
      * @param username librarian username
      * @param password librarian password
-     * @throws Exception if a service error occurs
+     * @throws Exception if a service error happens
      */
     private static void runLibrarian(Scanner in, String username, String password) throws Exception {
         LibrarianService librarianService = new LibrarianService();
@@ -122,12 +123,12 @@ public class Main {
     }
 
     /**
-     * Runs a user session.
+     * Starts the user session and shows the user menu.
      *
-     * @param in console scanner
+     * @param in scanner for input
      * @param username user username
      * @param password user password
-     * @throws Exception if a service error occurs
+     * @throws Exception if a service error happens
      */
     private static void runUser(Scanner in, String username, String password) throws Exception {
         UserService userService = new UserService();

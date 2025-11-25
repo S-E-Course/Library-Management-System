@@ -1,21 +1,18 @@
 package com.library.model;
 
 /**
- * Concrete media type for journals.
- * Uses a borrow duration of fourteen days.
- *
- * @author
- * @version 1.0
+ * Media type for journals.
+ * Has a borrow period of fourteen days.
  */
 public class Journal extends Media {
 
-    /** {@inheritDoc} */
+    /** @return media type string */
     @Override
     public String getType() {
         return "journal";
     }
 
-    /** {@inheritDoc} */
+    /** @return borrow duration in days */
     @Override
     public int getBorrowDurationDays() {
         return 14;

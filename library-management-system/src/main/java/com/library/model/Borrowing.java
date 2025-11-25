@@ -3,11 +3,8 @@ package com.library.model;
 import java.time.LocalDate;
 
 /**
- * Borrowing record linking a user and a media item.
- * Tracks dates and status values such as borrowed, overdue, returned.
- *
- * @author
- * @version 1.0
+ * Represents a borrowing record for a user and a media item.
+ * Stores dates and the current status.
  */
 public class Borrowing {
     private int borrowId;
@@ -15,8 +12,8 @@ public class Borrowing {
     private int mediaId;
     private LocalDate borrowDate;
     private LocalDate dueDate;
-    private LocalDate returnDate;  // may be null
-    private String status;         // borrowed, overdue, returned
+    private LocalDate returnDate;
+    private String status;
 
     /** @return borrowing identifier */
     public int getBorrowId() { return borrowId; }
@@ -36,10 +33,10 @@ public class Borrowing {
     /** @param mediaId media identifier */
     public void setMediaId(int mediaId) { this.mediaId = mediaId; }
 
-    /** @return date the item was borrowed */
+    /** @return borrow date */
     public LocalDate getBorrowDate() { return borrowDate; }
 
-    /** @param borrowDate date the item was borrowed */
+    /** @param borrowDate borrow date */
     public void setBorrowDate(LocalDate borrowDate) { this.borrowDate = borrowDate; }
 
     /** @return due date */
@@ -48,22 +45,22 @@ public class Borrowing {
     /** @param dueDate due date */
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
 
-    /** @return date returned or null */
+    /** @return return date or null */
     public LocalDate getReturnDate() { return returnDate; }
 
-    /** @param returnDate date returned or null */
+    /** @param returnDate return date or null */
     public void setReturnDate(LocalDate returnDate) { this.returnDate = returnDate; }
 
-    /** @return status string such as borrowed, overdue, returned */
+    /** @return status string */
     public String getStatus() { return status; }
 
     /** @param status status string */
     public void setStatus(String status) { this.status = status; }
 
     /**
-     * Returns true if the item is not yet returned and the due date is before today.
+     * Checks if the item is overdue.
      *
-     * @return true when overdue
+     * @return true if overdue
      */
     public boolean isOverdue() {
         return returnDate == null && dueDate != null && dueDate.isBefore(LocalDate.now());

@@ -8,20 +8,20 @@ import com.library.model.Borrowing;
 import com.library.model.Fine;
 
 /**
- * DAO for issuing, updating, and reading fines.
- * Handles fine creation, payment, queries, and updates.
+ * Handles database operations for fines.
+ * Supports creating, paying, reading, and updating fines.
  *
- * @author
+ * @author Abdallah
  * @version 1.0
  */
 public class FineDAO {
 
     /**
-     * Issues a new fine for a borrowing.
+     * Creates a new fine for a borrowing.
      *
      * @param conn active database connection
-     * @param borrowId borrowing identifier
-     * @param userId user identifier
+     * @param borrowId borrowing id
+     * @param userId user id
      * @param amount fine amount
      * @return true if the fine was inserted
      * @throws Exception if a database error occurs
@@ -37,11 +37,12 @@ public class FineDAO {
     }
 
     /**
-     * Pays part or all of a fine. Updates the user balance. If fully paid then the borrowing is marked returned and media is set available.
+     * Pays part or all of a fine.
+     * Updates the user balance and, if fully paid, marks the borrowing as returned and media as available.
      *
      * @param conn active database connection
-     * @param fineId fine identifier
-     * @param userId user identifier
+     * @param fineId fine id
+     * @param userId user id
      * @param amount amount to pay
      * @return true if the update succeeded
      * @throws Exception if a database error occurs
@@ -94,11 +95,11 @@ public class FineDAO {
     }
 
     /**
-     * Returns the current amount for a fine.
+     * Gets the current amount of a fine.
      *
      * @param conn active database connection
-     * @param fineId fine identifier
-     * @param userId user identifier
+     * @param fineId fine id
+     * @param userId user id
      * @return current fine amount
      * @throws SQLException if the fine is not found or a database error occurs
      */
@@ -117,10 +118,10 @@ public class FineDAO {
     }
 
     /**
-     * Checks if a fine for a borrowing is paid.
+     * Checks if a fine for a given borrowing is paid.
      *
      * @param conn active database connection
-     * @param borrowId borrowing identifier
+     * @param borrowId borrowing id
      * @return true if paid, false if not paid, or null if no fine exists
      * @throws Exception if a database error occurs
      */
@@ -139,7 +140,7 @@ public class FineDAO {
      * Returns all fines for a user.
      *
      * @param conn active database connection
-     * @param userId user identifier
+     * @param userId user id
      * @return list of fines for the user
      * @throws Exception if a database error occurs
      */
@@ -166,11 +167,11 @@ public class FineDAO {
     }
 
     /**
-     * Returns the fine for a borrowing.
+     * Returns the fine linked to a borrowing.
      *
      * @param conn active database connection
-     * @param borrowId borrowing identifier
-     * @return the fine or null if not found
+     * @param borrowId borrowing id
+     * @return fine or null if not found
      * @throws Exception if a database error occurs
      */
     public Fine getBorrowingFine(Connection conn, int borrowId) throws Exception {
@@ -194,11 +195,12 @@ public class FineDAO {
     }
 
     /**
-     * Updates a fine by adding a delta amount. A positive value increases the fine. A negative value decreases the fine.
+     * Changes the fine amount by a given value.
+     * A positive amount increases the fine; a negative amount decreases it.
      *
      * @param conn active database connection
-     * @param fineId fine identifier
-     * @param amount delta amount to apply
+     * @param fineId fine id
+     * @param amount change to apply to the fine
      * @throws Exception if a database error occurs
      */
     public void updateFineBalance(Connection conn, int fineId, double amount) throws Exception {
@@ -212,10 +214,10 @@ public class FineDAO {
     }
 
     /**
-     * Sets the fine date to the current date.
+     * Sets the fine date to today's date.
      *
      * @param conn active database connection
-     * @param fineId fine identifier
+     * @param fineId fine id
      * @throws Exception if a database error occurs
      */
     public void updateFineDate(Connection conn, int fineId) throws Exception {

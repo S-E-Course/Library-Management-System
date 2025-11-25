@@ -1,228 +1,205 @@
 package com.library.service;
 
 import com.library.dao.*;
-import com.library.model.*;
-import org.junit.jupiter.api.*;
+import com.library.model.Book;
+import com.library.model.Media;
+import com.library.model.User;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.sql.Connection;
-import java.util.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for {@link UserService} using simple fake DAO implementations.
- *
- * These tests verify:
- * - login success and failure paths
- * - borrow rules (availability and outstanding balance)
- * - return media calls through to the DAO
- * - paying fines updates the DAO
- * - media search returns a non-empty list
- * - connection getter is non-null
- *
- * The test uses in-class fake DAOs instead of an external mocking framework.
+ * Tests UserService using mocked DAO objects and a mocked database connection.
  */
 class UserServiceTest {
 
-    /**
-     * Minimal fake {@link UserDAO} for controlling user lookups and balances.
-     */
-    private static class FakeUserDAO extends UserDAO {
-        double balance = 0;
-        User user;
-
-        @Override
-        public User findByUsername(Connection conn, String username) { return user; }
-
-        @Override
-        public double getUserBalance(Connection conn, int id) { return balance; }
-    }
-
-    /**
-     * Minimal fake {@link MediaDAO} for controlling search and find-by-id behavior.
-     */
-    private static class FakeMediaDAO extends MediaDAO {
-        Media m;
-
-        @Override
-        public Media findById(Connection conn, int id) { return m; }
-
-        @Override
-        public List<Media> searchMedia(Connection conn, String kw, String type) {
-            return Arrays.asList(m == null ? new Book() : m);
-        }
-    }
-
-    /**
-     * Minimal fake {@link BorrowingDAO} for recording borrow/return calls.
-     */
-    private static class FakeBorrowingDAO extends BorrowingDAO {
-        boolean borrowed, returned;
-
-        @Override
-        public boolean borrowMedia(Connection c, int u, int m) { borrowed = true; return true; }
-
-        @Override
-        public boolean returnMedia(Connection c, int u, int m) { returned = true; return true; }
-    }
-
-    /**
-     * Minimal fake {@link FineDAO} for recording payFine calls.
-     */
-    private static class FakeFineDAO extends FineDAO {
-        boolean paid;
-
-        @Override
-        public boolean payFine(Connection c, int f, int u, double a) { paid = true; return true; }
-    }
-
     private UserService service;
-    private FakeUserDAO userDAO;
-    private FakeMediaDAO mediaDAO;
-    private FakeBorrowingDAO borrowingDAO;
-    private FakeFineDAO fineDAO;
+    private UserDAO userDAO;
+    private MediaDAO mediaDAO;
+    private BorrowingDAO borrowingDAO;
+    private FineDAO fineDAO;
+    private Connection conn;
     private User user;
 
     /**
-     * Initializes the service under test with fake DAOs and a test user.
+     * Sets up the service and mocks before each test.
      *
-     * @throws Exception if the service setup fails
+     * @throws Exception if mock setup fails
      */
     @BeforeEach
     void setup() throws Exception {
-        userDAO = new FakeUserDAO();
-        mediaDAO = new FakeMediaDAO();
-        borrowingDAO = new FakeBorrowingDAO();
-        fineDAO = new FakeFineDAO();
+        userDAO = mock(UserDAO.class);
+        mediaDAO = mock(MediaDAO.class);
+        borrowingDAO = mock(BorrowingDAO.class);
+        fineDAO = mock(FineDAO.class);
+        conn = mock(Connection.class);
 
-        service = new UserService() {
-            { // expose internals to fake behavior
-                setUserDAO(userDAO);
-                setMediaDAO(mediaDAO);
-                setBorrowingDAO(borrowingDAO);
-                setFineDAO(fineDAO);
-                setConnection((Connection) null);
-                setLoggedUser(null);
-            }
-        };
+        service = new UserService();
+        service.setUserDAO(userDAO);
+        service.setMediaDAO(mediaDAO);
+        service.setBorrowingDAO(borrowingDAO);
+        service.setFineDAO(fineDAO);
+        service.setConnection(conn);
+        service.setLoggedUser(null);
 
         user = new User();
         user.setUserId(1);
         user.setUsername("mosub");
         user.setPasswordHash("123");
-        userDAO.user = user;
     }
 
     /**
-     * Verifies login succeeds with a matching password hash.
-     *
-     * @throws Exception on unexpected failure
+     * Tests successful login when the password matches.
      */
     @Test
     void loginSucceedsWithCorrectPassword() throws Exception {
+        when(userDAO.findByUsername(conn, "mosub")).thenReturn(user);
+
         boolean ok = service.login("mosub", "123");
-        assertThat(ok, is(true));
-        assertThat(service.getLoggedUser(), equalTo(user));
+
+        assertTrue(ok);
+        assertEquals(user, service.getLoggedUser());
     }
 
     /**
-     * Verifies login fails with a wrong password hash.
-     *
-     * @throws Exception on unexpected failure
+     * Tests failed login when the password is wrong.
      */
     @Test
     void loginFailsWithWrongPassword() throws Exception {
+        when(userDAO.findByUsername(conn, "mosub")).thenReturn(user);
+
         boolean ok = service.login("mosub", "wrong");
-        assertThat(ok, is(false));
+
+        assertFalse(ok);
+        assertNull(service.getLoggedUser());
     }
 
     /**
-     * Verifies borrowing succeeds when media is available and the user has no balance.
-     *
-     * @throws Exception on unexpected failure
+     * Tests borrowing media when conditions are valid.
      */
     @Test
-    void borrowMediaSucceedsWhenAvailableAndNoBalance() throws Exception {
+    void borrowMediaSucceedsWhenNoBalanceNoOverdueAndAvailable() throws Exception {
         service.setLoggedUser(user);
-        Book b = new Book(); b.setId(5); b.setAvailable(true);
-        mediaDAO.m = b;
+
+        Book b = new Book();
+        b.setId(5);
+        b.setAvailable(true);
+
+        when(userDAO.getUserBalance(conn, 1)).thenReturn(0.0);
+        when(borrowingDAO.hasOverdueForUser(conn, 1)).thenReturn(false);
+        when(mediaDAO.findById(conn, 5)).thenReturn(b);
+        when(borrowingDAO.borrowMedia(conn, 1, 5)).thenReturn(true);
+
         boolean ok = service.borrowMedia(5);
-        assertThat(ok, is(true));
-        assertThat(borrowingDAO.borrowed, is(true));
+
+        assertTrue(ok);
     }
 
     /**
-     * Verifies borrowing fails when media is not available.
-     *
-     * @throws Exception on unexpected failure
+     * Tests borrowing media when the item is not available.
      */
     @Test
-    void borrowMediaFailsWhenUnavailable() throws Exception {
+    void borrowMediaFailsWhenMediaUnavailable() throws Exception {
         service.setLoggedUser(user);
-        Book b = new Book(); b.setId(1); b.setAvailable(false);
-        mediaDAO.m = b;
+
+        Book b = new Book();
+        b.setId(1);
+        b.setAvailable(false);
+
+        when(userDAO.getUserBalance(conn, 1)).thenReturn(0.0);
+        when(borrowingDAO.hasOverdueForUser(conn, 1)).thenReturn(false);
+        when(mediaDAO.findById(conn, 1)).thenReturn(b);
+
         boolean ok = service.borrowMedia(1);
-        assertThat(ok, is(false));
-        assertThat(borrowingDAO.borrowed, is(false));
+
+        assertFalse(ok);
     }
 
     /**
-     * Verifies borrowing fails when the user has an outstanding balance.
-     *
-     * @throws Exception on unexpected failure
+     * Tests borrowing media when the user has unpaid balance.
      */
     @Test
     void borrowMediaFailsWhenUserHasBalance() throws Exception {
         service.setLoggedUser(user);
-        Book b = new Book(); b.setId(7); b.setAvailable(true);
-        mediaDAO.m = b;
-        userDAO.balance = 50;
+
+        Book b = new Book();
+        b.setId(7);
+        b.setAvailable(true);
+
+        when(userDAO.getUserBalance(conn, 1)).thenReturn(50.0);
+        when(mediaDAO.findById(conn, 7)).thenReturn(b);
+
         boolean ok = service.borrowMedia(7);
-        assertThat(ok, is(false));
+
+        assertFalse(ok);
     }
 
     /**
-     * Verifies returning media calls through to the DAO and succeeds.
-     *
-     * @throws Exception on unexpected failure
+     * Tests borrowing media when the user has overdue borrowings.
      */
     @Test
-    void returnMediaCallsDaoAndSucceeds() throws Exception {
+    void borrowMediaFailsWhenUserHasOverdueBorrowings() throws Exception {
         service.setLoggedUser(user);
+
+        when(userDAO.getUserBalance(conn, 1)).thenReturn(0.0);
+        when(borrowingDAO.hasOverdueForUser(conn, 1)).thenReturn(true);
+
+        boolean ok = service.borrowMedia(5);
+
+        assertFalse(ok);
+    }
+
+    /**
+     * Tests returning media when the DAO reports success.
+     */
+    @Test
+    void returnMediaSucceedsWhenDaoReturnsTrue() throws Exception {
+        service.setLoggedUser(user);
+        when(borrowingDAO.returnMedia(conn, 1, 9)).thenReturn(true);
+
         boolean ok = service.returnMedia(9);
-        assertThat(ok, is(true));
-        assertThat(borrowingDAO.returned, is(true));
+
+        assertTrue(ok);
     }
 
     /**
-     * Verifies paying a fine calls through to the fine DAO and succeeds.
-     *
-     * @throws Exception on unexpected failure
+     * Tests paying a fine when the DAO reports success.
      */
     @Test
-    void payFineUpdatesFineDao() throws Exception {
+    void payFineSucceedsWhenDaoReturnsTrue() throws Exception {
         service.setLoggedUser(user);
+        when(fineDAO.payFine(conn, 3, 1, 20.0)).thenReturn(true);
+
         boolean ok = service.payFine(3, 20.0);
-        assertThat(ok, is(true));
-        assertThat(fineDAO.paid, is(true));
+
+        assertTrue(ok);
     }
 
     /**
-     * Verifies media search returns a non-empty list.
-     *
-     * @throws Exception on unexpected failure
+     * Tests searching for media and receiving a non-empty list.
      */
     @Test
-    void searchMediaReturnsList() throws Exception {
+    void searchMediaReturnsNonEmptyList() throws Exception {
+        Media m = new Book();
+        when(mediaDAO.searchMedia(conn, "abc", "book")).thenReturn(Arrays.asList(m));
+
         List<Media> list = service.searchMedia("abc", "book");
-        assertThat(list, is(not(empty())));
+
+        assertNotNull(list);
+        assertFalse(list.isEmpty());
     }
 
     /**
-     * Verifies the user service's connection getter is not null.
-     * This ensures callers relying on a connection reference can obtain one.
+     * Tests that the user connection getter is not null.
      */
     @Test
     void connectionGetterNotNull() {
-        assertThat(service.getUserConnection(), is(notNullValue()));
+        assertNotNull(service.getUserConnection());
     }
 }

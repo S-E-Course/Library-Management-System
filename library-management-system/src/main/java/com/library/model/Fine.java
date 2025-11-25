@@ -3,11 +3,8 @@ package com.library.model;
 import java.time.LocalDate;
 
 /**
- * Fine assessed for a borrowing.
- * Stores amount, payment status, and the date the fine was created or updated.
- *
- * @author
- * @version 1.0
+ * Represents a fine linked to a borrowing.
+ * Holds the amount, payment status, and the date the fine was recorded.
  */
 public class Fine {
     private int id;
@@ -35,21 +32,21 @@ public class Fine {
     /** @param borrowId borrowing identifier */
     public void setBorrowId(int borrowId) { this.borrowId = borrowId; }
 
-    /** @return current fine amount */
+    /** @return fine amount */
     public double getAmount() { return amount; }
 
-    /** @param amount current fine amount */
+    /** @param amount fine amount */
     public void setAmount(double amount) { this.amount = amount; }
 
-    /** @return true if the fine is fully paid */
+    /** @return true if the fine is paid */
     public boolean isPaid() { return paid; }
 
-    /** @param paid payment flag */
+    /** @param paid payment status */
     public void setPaid(boolean paid) { this.paid = paid; }
 
-    /** @return date of the fine record */
+    /** @return date of the fine */
     public LocalDate getFineDate() { return fineDate; }
 
-    /** @param fineDate date of the fine record */
+    /** @param fineDate date of the fine */
     public void setFineDate(LocalDate fineDate) { this.fineDate = fineDate; }
 }

@@ -10,18 +10,17 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Command-line interface for administrator operations.
- * Provides menu actions to manage media and users and to send overdue reminders.
+ * Provides the admin command-line menu and actions.
  */
 public class AdminCLI {
     private final Scanner in;
     private final AdminService admin;
 
     /**
-     * Creates a new AdminCLI.
+     * Creates an admin menu interface.
      *
-     * @param in console scanner
-     * @param admin admin service instance
+     * @param in scanner used for input
+     * @param admin service used for admin actions
      */
     public AdminCLI(Scanner in, AdminService admin) {
         this.in = in;
@@ -29,7 +28,7 @@ public class AdminCLI {
     }
 
     /**
-     * Runs the admin interaction loop until the user chooses logout.
+     * Shows the admin menu and handles user choices.
      */
     public void run() {
         while (true) {
@@ -82,9 +81,9 @@ public class AdminCLI {
     }
 
     /**
-     * Prompts for media fields and adds a media item.
+     * Reads media details and adds a new media item.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if adding fails
      */
     private void addMediaFlow() throws Exception {
         MenuPrinter.title("Add Media");
@@ -114,9 +113,9 @@ public class AdminCLI {
     }
 
     /**
-     * Lists media filtered by type.
+     * Shows all media filtered by type.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if loading media fails
      */
     private void listMediaFlow() throws Exception {
         MenuPrinter.title("Media");
@@ -127,9 +126,9 @@ public class AdminCLI {
     }
 
     /**
-     * Prompts for media id and removes the media item.
+     * Reads an ID and removes the selected media item.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if removing fails
      */
     private void removeMediaFlow() throws Exception {
         MenuPrinter.title("Remove Media");
@@ -140,9 +139,9 @@ public class AdminCLI {
     }
 
     /**
-     * Prompts for user data and adds a new user.
+     * Reads user info and adds a new user.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if adding fails
      */
     private void addUserFlow() throws Exception {
         MenuPrinter.title("Add User");
@@ -166,9 +165,9 @@ public class AdminCLI {
     }
 
     /**
-     * Lists all users with basic fields.
+     * Lists all users with basic details.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if loading users fails
      */
     private void listUsersFlow() throws Exception {
         MenuPrinter.title("Users");
@@ -185,9 +184,9 @@ public class AdminCLI {
     }
 
     /**
-     * Prompts for user id and removes the user.
+     * Reads a user ID and removes that user.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if removing fails
      */
     private void removeUserFlow() throws Exception {
         MenuPrinter.title("Remove User");
@@ -198,9 +197,9 @@ public class AdminCLI {
     }
 
     /**
-     * Triggers US3.1 Send Overdue Reminders using AdminService.
+     * Sends overdue reminder emails.
      *
-     * @throws Exception if a service error occurs
+     * @throws Exception if sending fails
      */
     private void sendRemindersFlow() throws Exception {
         MenuPrinter.title("Sending Overdue Reminders");
