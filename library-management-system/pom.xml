@@ -51,7 +51,6 @@
   <properties>
 
   	<sonar.organization>s-e-course</sonar.organization>
-	<!--<sonar.projectKey>S.E.Course_Library-Management-System</sonar.projectKey> -->
 	<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	
 	</properties>
