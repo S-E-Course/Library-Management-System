@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MediaDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.dao</a> &gt; <span class="el_source">MediaDAO.java</span></div><h1>MediaDAO.java</h1><pre class="source lang-java linenums">package com.library.dao;
+
+import com.library.model.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * DAO for media operations. Supports adding, removing, searching,
+ */
+<span class="fc" id="L11">public class MediaDAO {</span>
+
+    /**
+     * Adds a new media item.
+     *
+     * @param conn active database connection
+     * @param media media object to insert
+     * @return true if inserted
+     * @throws Exception if a database error occurs
+     */
+    public boolean addMedia(Connection conn, Media media) throws Exception {
+<span class="fc" id="L22">        String sql = &quot;INSERT INTO media (title, author, isbn, type) VALUES (?, ?, ?, ?)&quot;;</span>
+<span class="fc" id="L23">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L24">            stmt.setString(1, media.getTitle());</span>
+<span class="fc" id="L25">            stmt.setString(2, media.getAuthor());</span>
+<span class="fc" id="L26">            stmt.setString(3, media.getIsbn());</span>
+<span class="fc" id="L27">            stmt.setString(4, media.getType());</span>
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">            return stmt.executeUpdate() &gt; 0;</span>
+        }
+    }
+
+    /**
+     * Removes a media item by id.
+     *
+     * @param conn active database connection
+     * @param mediaId media id
+     * @return true if deleted
+     * @throws Exception if a database error occurs
+     */
+    public boolean removeMedia(Connection conn, int mediaId) throws Exception {
+<span class="fc" id="L41">        String sql = &quot;DELETE FROM media WHERE media_id = ?&quot;;</span>
+<span class="fc" id="L42">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L43">            stmt.setInt(1, mediaId);</span>
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">            return stmt.executeUpdate() &gt; 0;</span>
+        }
+    }
+
+    /**
+     * Searches media by keyword and optional type.
+     *
+     * @param conn active database connection
+     * @param keyword search text
+     * @param type media type or &quot;media&quot; for all
+     * @return list of matching media
+     * @throws Exception if a database error occurs
+     */
+    public List&lt;Media&gt; searchMedia(Connection conn, String keyword, String type) throws Exception {
+<span class="fc" id="L58">        List&lt;Media&gt; results = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L60">        StringBuilder sql = new StringBuilder(</span>
+            &quot;SELECT * FROM media WHERE (title ILIKE ? OR author ILIKE ? OR isbn ILIKE ?)&quot;
+        );
+<span class="fc bfc" id="L63" title="All 4 branches covered.">        if (type != null &amp;&amp; !type.equalsIgnoreCase(&quot;media&quot;)) {</span>
+<span class="fc" id="L64">            sql.append(&quot; AND type = ?&quot;);</span>
+        }
+
+<span class="fc" id="L67">        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {</span>
+<span class="fc" id="L68">            String like = &quot;%&quot; + keyword + &quot;%&quot;;</span>
+<span class="fc" id="L69">            stmt.setString(1, like);</span>
+<span class="fc" id="L70">            stmt.setString(2, like);</span>
+<span class="fc" id="L71">            stmt.setString(3, like);</span>
+
+<span class="fc bfc" id="L73" title="All 4 branches covered.">            if (type != null &amp;&amp; !type.equalsIgnoreCase(&quot;media&quot;)) {</span>
+<span class="fc" id="L74">                stmt.setString(4, type.toLowerCase());</span>
+            }
+
+<span class="fc" id="L77">            ResultSet rs = stmt.executeQuery();</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L79">                results.add(mapRowToMedia(rs));</span>
+            }
+        }
+<span class="fc" id="L82">        return results;</span>
+    }
+
+    /**
+     * Updates the availability of media.
+     *
+     * @param conn active database connection
+     * @param mediaId media id
+     * @param available true if available
+     * @return true if updated
+     * @throws Exception if a database error occurs
+     */
+    public boolean setMediaStatus(Connection conn, int mediaId, boolean available) throws Exception {
+<span class="fc" id="L95">        String sql = &quot;UPDATE media SET available = ? WHERE media_id = ?&quot;;</span>
+<span class="fc" id="L96">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L97">            stmt.setBoolean(1, available);</span>
+<span class="fc" id="L98">            stmt.setInt(2, mediaId);</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">            return stmt.executeUpdate() &gt; 0;</span>
+        }
+    }
+
+    /**
+     * Checks if a media item is available.
+     *
+     * @param conn active database connection
+     * @param mediaId media id
+     * @return true if available
+     * @throws Exception if media is not found
+     */
+    public boolean mediaAvailable(Connection conn, int mediaId) throws Exception {
+<span class="fc" id="L112">        String sql = &quot;SELECT available FROM media WHERE media_id = ?&quot;;</span>
+<span class="fc" id="L113">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L114">            stmt.setInt(1, mediaId);</span>
+<span class="fc" id="L115">            ResultSet rs = stmt.executeQuery();</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">            if (rs.next()) return rs.getBoolean(&quot;available&quot;);</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">        }</span>
+<span class="fc" id="L118">        throw new Exception(&quot;Media not found&quot;);</span>
+    }
+
+    /**
+     * Lists all media, optionally filtered by type.
+     *
+     * @param conn active database connection
+     * @param type media type or &quot;media&quot; for all
+     * @return list of media
+     * @throws Exception if a database error occurs
+     */
+    public List&lt;Media&gt; listAllMedia(Connection conn, String type) throws Exception {
+<span class="fc" id="L130">        List&lt;Media&gt; mediaList = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L131">        StringBuilder sql = new StringBuilder(&quot;SELECT * FROM media&quot;);</span>
+
+<span class="fc bfc" id="L133" title="All 4 branches covered.">        if (type != null &amp;&amp; !type.equalsIgnoreCase(&quot;media&quot;)) {</span>
+<span class="fc" id="L134">            sql.append(&quot; WHERE type = ?&quot;);</span>
+        }
+<span class="fc" id="L136">        sql.append(&quot; ORDER BY media_id&quot;);</span>
+
+<span class="fc" id="L138">        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {</span>
+<span class="fc bfc" id="L139" title="All 4 branches covered.">            if (type != null &amp;&amp; !type.equalsIgnoreCase(&quot;media&quot;)) {</span>
+<span class="fc" id="L140">                ps.setString(1, type.toLowerCase());</span>
+            }
+
+<span class="fc" id="L143">            ResultSet rs = ps.executeQuery();</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L145">                mediaList.add(mapRowToMedia(rs));</span>
+            }
+        }
+<span class="fc" id="L148">        return mediaList;</span>
+    }
+
+    /**
+     * Finds media by id.
+     *
+     * @param conn active database connection
+     * @param mediaId media id
+     * @return media or null if not found
+     * @throws Exception if a database error occurs
+     */
+    public Media findById(Connection conn, int mediaId) throws Exception {
+<span class="fc" id="L160">        String sql = &quot;SELECT * FROM media WHERE media_id = ?&quot;;</span>
+<span class="fc" id="L161">        try (PreparedStatement ps = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L162">            ps.setInt(1, mediaId);</span>
+<span class="fc" id="L163">            ResultSet rs = ps.executeQuery();</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">            if (rs.next()) {</span>
+<span class="fc" id="L165">                return mapRowToMedia(rs);</span>
+            }
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">        }</span>
+<span class="fc" id="L168">        return null;</span>
+    }
+
+    /**
+     * Returns the active borrowed media of a user.
+     *
+     * @param conn active database connection
+     * @param userId user id
+     * @return list of active media
+     * @throws Exception if a database error occurs
+     */
+    public List&lt;Media&gt; findActiveMedia(Connection conn, int userId) throws Exception {
+<span class="fc" id="L180">        List&lt;Media&gt; mediaList = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L182">        String sql = &quot;SELECT m.* FROM media m &quot; +</span>
+                     &quot;JOIN borrowings b ON m.media_id = b.media_id &quot; +
+                     &quot;WHERE b.user_id = ? AND b.status = 'borrowed'&quot;;
+
+<span class="fc" id="L186">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L187">            stmt.setInt(1, userId);</span>
+<span class="fc" id="L188">            try (ResultSet rs = stmt.executeQuery()) {</span>
+<span class="fc bfc" id="L189" title="All 2 branches covered.">                while (rs.next()) {</span>
+<span class="fc" id="L190">                    mediaList.add(mapRowToMedia(rs));</span>
+                }
+            }
+        }
+<span class="fc" id="L194">        return mediaList;</span>
+    }
+
+    /**
+     * Creates a Media object from a database row.
+     *
+     * @param rs result set with media fields
+     * @return media instance
+     * @throws SQLException if a read fails
+     */
+    private Media mapRowToMedia(ResultSet rs) throws SQLException {
+<span class="fc" id="L205">        String type = rs.getString(&quot;type&quot;);</span>
+        Media m;
+
+<span class="fc bfc" id="L208" title="All 3 branches covered.">        switch (type) {</span>
+            case &quot;cd&quot;:
+<span class="fc" id="L210">                m = new CD();</span>
+<span class="fc" id="L211">                break;</span>
+            case &quot;journal&quot;:
+<span class="fc" id="L213">                m = new Journal();</span>
+<span class="fc" id="L214">                break;</span>
+            default:
+<span class="fc" id="L216">                m = new Book();</span>
+                break;
+        }
+
+<span class="fc" id="L220">        m.setId(rs.getInt(&quot;media_id&quot;));</span>
+<span class="fc" id="L221">        m.setTitle(rs.getString(&quot;title&quot;));</span>
+<span class="fc" id="L222">        m.setAuthor(rs.getString(&quot;author&quot;));</span>
+<span class="fc" id="L223">        m.setIsbn(rs.getString(&quot;isbn&quot;));</span>
+<span class="fc" id="L224">        m.setAvailable(rs.getBoolean(&quot;available&quot;));</span>
+<span class="fc" id="L225">        return m;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

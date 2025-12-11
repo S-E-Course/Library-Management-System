@@ -68,6 +68,12 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>0.8.11</version>
+                <configuration>
+		        <excludes>
+		            <exclude>**/com/library/app/Main.class</exclude>
+		            <exclude>**/com/library/util/DatabaseConnection.class</exclude>
+		        </excludes>
+    </configuration>
                 <executions>
                     <execution>
                         <goals>

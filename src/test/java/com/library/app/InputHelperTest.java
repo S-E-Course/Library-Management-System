@@ -101,6 +101,30 @@ public class InputHelperTest {
     }
 
     /**
+     * Verifies that readInt rejects a value above the allowed maximum
+     * and then returns the next valid value.
+     */
+    @Test
+    public void testReadIntAboveMaxThenValid() {
+        String data = "99\n8\n"; // 99 is invalid (above max=10), 8 is valid
+        Scanner scanner = new Scanner(data);
+        int result = InputHelper.readInt(scanner, "Enter: ", 1, 10);
+        assertEquals(8, result);
+    }
+
+    /**
+     * Verifies that readDouble rejects a value below the allowed minimum
+     * and then accepts a valid double on the next attempt.
+     */
+    @Test
+    public void testReadDoubleBelowMinThenValid() {
+        String data = "-1\n1.5\n"; // -1 is invalid (< min=0.0), 1.5 is valid
+        Scanner scanner = new Scanner(data);
+        double result = InputHelper.readDouble(scanner, "Enter: ", 0.0, 10.0);
+        assertEquals(1.5, result);
+    }
+
+    /**
      * Verifies readDouble rejects a non-numeric value and then accepts a valid one.
      */
     @Test

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.service</a> &gt; <span class="el_source">UserService.java</span></div><h1>UserService.java</h1><pre class="source lang-java linenums">package com.library.service;
+
+import com.library.dao.*;
+import com.library.model.*;
+import com.library.util.DatabaseConnection;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+/**
+ * Service for end-user actions: login, search, borrow, return,
+ * paying fines, and creating the mixed-media fine summary (US5.3).
+ */
+public class UserService {
+    private Connection conn;
+<span class="fc" id="L17">    private UserDAO userDAO = new UserDAO();</span>
+<span class="fc" id="L18">    private MediaDAO mediaDAO = new MediaDAO();</span>
+<span class="fc" id="L19">    private BorrowingDAO borrowingDAO = new BorrowingDAO();</span>
+<span class="fc" id="L20">    private FineDAO fineDAO = new FineDAO();</span>
+    private User loggedUser;
+
+    /**
+     * Opens a database connection for user operations.
+     *
+     * @throws Exception if the connection fails
+     */
+<span class="fc" id="L28">    public UserService() throws Exception {</span>
+<span class="fc" id="L29">        this.conn = DatabaseConnection.connect();</span>
+<span class="fc" id="L30">    }</span>
+
+    /**
+     * Logs in a user with username and password hash.
+     *
+     * @param username login name
+     * @param passwordHash password hash to check
+     * @return true when valid
+     * @throws Exception if reading user data fails
+     */
+    public boolean login(String username, String passwordHash) throws Exception {
+<span class="fc" id="L41">        User user = userDAO.findByUsername(conn, username);</span>
+<span class="fc bfc" id="L42" title="All 4 branches covered.">        if (user != null &amp;&amp; user.getPasswordHash().equals(passwordHash)) {</span>
+<span class="fc" id="L43">            loggedUser = user;</span>
+<span class="fc" id="L44">            return true;</span>
+        }
+<span class="fc" id="L46">        return false;</span>
+    }
+
+    /**
+     * Logs out and closes the shared connection.
+     *
+     * @throws SQLException if closing fails
+     */
+    public void logout() throws SQLException {
+<span class="fc" id="L55">        loggedUser = null;</span>
+<span class="fc" id="L56">        DatabaseConnection.disconnect();</span>
+<span class="fc" id="L57">    }</span>
+
+    /**
+     * Searches for media records.
+     *
+     * @param keyword text to match
+     * @param type media type or &quot;media&quot; for all
+     * @return matching media list
+     * @throws Exception if data access fails
+     */
+    public List&lt;Media&gt; searchMedia(String keyword, String type) throws Exception {
+<span class="fc" id="L68">        return mediaDAO.searchMedia(conn, keyword, type);</span>
+    }
+
+    /**
+     * Borrows a media item for the logged-in user.
+     * Borrowing is allowed only if the user has no unpaid balance
+     * and no overdue media.
+     *
+     * @param mediaId id of the media to borrow
+     * @return true if borrowed
+     * @throws Exception if the user is not logged in or borrowing fails
+     */
+    public boolean borrowMedia(int mediaId) throws Exception {
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        if (loggedUser == null)</span>
+<span class="fc" id="L82">            throw new IllegalStateException(&quot;User not logged in.&quot;);</span>
+
+<span class="fc" id="L84">        Media media = mediaDAO.findById(conn, mediaId);</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (media == null) {</span>
+<span class="fc" id="L86">            System.out.println(&quot;Media not found.&quot;);</span>
+<span class="fc" id="L87">            return false;</span>
+        }
+
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if (!media.isAvailable()) {</span>
+<span class="fc" id="L91">            System.out.println(&quot;Media is already borrowed.&quot;);</span>
+<span class="fc" id="L92">            return false;</span>
+        }
+
+<span class="fc" id="L95">        double balance = userDAO.getUserBalance(conn, loggedUser.getUserId());</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (balance &gt; 0) {</span>
+<span class="fc" id="L97">            System.out.println(&quot;User has unpaid balance and cannot borrow.&quot;);</span>
+<span class="fc" id="L98">            return false;</span>
+        }
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if (borrowingDAO.hasOverdueForUser(conn, loggedUser.getUserId())) {</span>
+<span class="nc" id="L101">            System.out.println(&quot;You have overdue borrowed items. Cannot borrow new media.&quot;);</span>
+<span class="nc" id="L102">            return false;</span>
+        }
+
+<span class="fc" id="L105">        return borrowingDAO.borrowMedia(conn, loggedUser.getUserId(), mediaId);</span>
+    }
+
+    /**
+     * Returns a borrowed media item for the logged-in user.
+     *
+     * @param mediaId id of media to return
+     * @return true if returned
+     * @throws Exception if not logged in or return fails
+     */
+    public boolean returnMedia(int mediaId) throws Exception {
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        if (loggedUser == null)</span>
+<span class="fc" id="L117">            throw new IllegalStateException(&quot;User not logged in.&quot;);</span>
+
+<span class="fc" id="L119">        return borrowingDAO.returnMedia(conn, loggedUser.getUserId(), mediaId);</span>
+    }
+
+    /**
+     * Pays a fine partly or fully.
+     *
+     * @param fineId id of the fine
+     * @param amount amount to pay
+     * @return true if applied
+     * @throws Exception if not logged in or payment fails
+     */
+    public boolean payFine(int fineId, double amount) throws Exception {
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (loggedUser == null)</span>
+<span class="fc" id="L132">            throw new IllegalStateException(&quot;User not logged in.&quot;);</span>
+
+<span class="fc" id="L134">        return fineDAO.payFine(conn, fineId, loggedUser.getUserId(), amount);</span>
+    }
+
+    /**
+     * Returns the logged-in user.
+     *
+     * @return user or null
+     */
+    public User getLoggedUser() {
+<span class="fc" id="L143">        return loggedUser;</span>
+    }
+
+    /**
+     * Returns the connection used by this service.
+     *
+     * @return SQL connection
+     */
+    public Connection getUserConnection() {
+<span class="fc" id="L152">        return conn;</span>
+    }
+
+    /**
+     * Gets borrowings for a specific user.
+     *
+     * @param userId user id
+     * @return list of borrowings
+     * @throws Exception if not logged in or reading fails
+     */
+    public List&lt;Borrowing&gt; findBorrowings(int userId) throws Exception {
+<span class="fc bfc" id="L163" title="All 2 branches covered.">        if (loggedUser == null)</span>
+<span class="fc" id="L164">            throw new IllegalStateException(&quot;User not logged in.&quot;);</span>
+<span class="fc" id="L165">        return borrowingDAO.findBorrowings(conn, userId);</span>
+    }
+
+    /**
+     * Gets fines for a specific user.
+     *
+     * @param userId user id
+     * @return list of fines
+     * @throws Exception if not logged in or reading fails
+     */
+    public List&lt;Fine&gt; findFines(int userId) throws Exception {
+<span class="fc bfc" id="L176" title="All 2 branches covered.">        if (loggedUser == null)</span>
+<span class="fc" id="L177">            throw new IllegalStateException(&quot;User not logged in.&quot;);</span>
+<span class="fc" id="L178">        return fineDAO.findFines(conn, userId);</span>
+    }
+
+    /**
+     * Builds a mixed-media fine summary for the logged-in user (US5.3).
+     *
+     * @return fine summary
+     * @throws Exception if not logged in or reading fails
+     */
+    public FineSummary getFineSummary() throws Exception {
+<span class="fc bfc" id="L188" title="All 2 branches covered.">        if (loggedUser == null) throw new IllegalStateException(&quot;User not logged in.&quot;);</span>
+<span class="fc" id="L189">        FineReportService report = new FineReportService(conn, fineDAO, borrowingDAO, mediaDAO);</span>
+<span class="fc" id="L190">        return report.buildFineSummaryForUser(loggedUser.getUserId());</span>
+    }
+
+    /**
+     * Sets the logged-in user (testing use only).
+     *
+     * @param user user to set
+     */
+<span class="fc" id="L198">    protected void setLoggedUser(User user) { this.loggedUser = user; }</span>
+
+    /**
+     * Replaces the user DAO (testing use only).
+     *
+     * @param dao override value
+     */
+<span class="fc" id="L205">    protected void setUserDAO(UserDAO dao) { this.userDAO = dao; }</span>
+
+    /**
+     * Replaces the media DAO (testing use only).
+     *
+     * @param dao override value
+     */
+<span class="fc" id="L212">    protected void setMediaDAO(MediaDAO dao) { this.mediaDAO = dao; }</span>
+
+    /**
+     * Replaces the borrowing DAO (testing use only).
+     *
+     * @param dao override value
+     */
+<span class="fc" id="L219">    protected void setBorrowingDAO(BorrowingDAO dao) { this.borrowingDAO = dao; }</span>
+
+    /**
+     * Replaces the fine DAO (testing use only).
+     *
+     * @param dao override value
+     */
+<span class="fc" id="L226">    protected void setFineDAO(FineDAO dao) { this.fineDAO = dao; }</span>
+
+    /**
+     * Replaces the SQL connection (testing use only).
+     *
+     * @param c connection to set
+     */
+<span class="fc" id="L233">    protected void setConnection(Connection c) { this.conn = c; }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

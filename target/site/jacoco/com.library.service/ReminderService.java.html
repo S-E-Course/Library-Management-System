@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReminderService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.service</a> &gt; <span class="el_source">ReminderService.java</span></div><h1>ReminderService.java</h1><pre class="source lang-java linenums">package com.library.service;
+
+import com.library.dao.BorrowingDAO;
+import com.library.dao.UserDAO;
+import com.library.model.Borrowing;
+import com.library.model.User;
+
+import java.sql.Connection;
+import java.time.LocalDate;
+import java.util.*;
+
+/**
+ * Reminder logic for overdue borrowings (US3.1).
+ * Counts overdue items per user and sends a message:
+ * &quot;You have n overdue book(s).&quot; to each user.
+ */
+public class ReminderService {
+
+    private final Connection conn;
+    private final BorrowingDAO borrowingDAO;
+    private final UserDAO userDAO;
+    private final EmailNotifier notifier;
+
+    /**
+     * Creates a new reminder service.
+     *
+     * @param conn         SQL connection used for queries
+     * @param borrowingDAO DAO for overdue borrowings
+     * @param userDAO      DAO for users
+     * @param notifier     helper used to send emails
+     */
+    public ReminderService(Connection conn,
+                           BorrowingDAO borrowingDAO,
+                           UserDAO userDAO,
+<span class="fc" id="L35">                           EmailNotifier notifier) {</span>
+<span class="fc" id="L36">        this.conn = conn;</span>
+<span class="fc" id="L37">        this.borrowingDAO = borrowingDAO;</span>
+<span class="fc" id="L38">        this.userDAO = userDAO;</span>
+<span class="fc" id="L39">        this.notifier = notifier;</span>
+<span class="fc" id="L40">    }</span>
+
+    /**
+     * Sends reminder emails to users who have overdue items.
+     * The email body uses the text: &quot;You have n overdue book(s).&quot;.
+     *
+     * @return map from user id to number of overdue items
+     * @throws Exception if reading data or sending messages fails
+     */
+    public Map&lt;Integer, Integer&gt; sendOverdueReminders() throws Exception {
+<span class="fc" id="L50">        List&lt;Borrowing&gt; all = borrowingDAO.findOverdueMedia(conn);</span>
+<span class="pc bpc" id="L51" title="1 of 4 branches missed.">        if (all == null || all.isEmpty()) return Collections.emptyMap();</span>
+
+<span class="fc" id="L53">        LocalDate today = LocalDate.now();</span>
+<span class="fc" id="L54">        Map&lt;Integer, Integer&gt; counts = new HashMap&lt;&gt;();</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        for (Borrowing b : all) {</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            boolean overdue = &quot;overdue&quot;.equalsIgnoreCase(b.getStatus())</span>
+<span class="pc bpc" id="L58" title="1 of 4 branches missed.">                    || (b.getDueDate() != null &amp;&amp; b.getDueDate().isBefore(today));</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">            if (!overdue) continue;</span>
+<span class="fc" id="L60">            counts.merge(b.getUserId(), 1, Integer::sum);</span>
+<span class="fc" id="L61">        }</span>
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        for (Map.Entry&lt;Integer, Integer&gt; e : counts.entrySet()) {</span>
+<span class="fc" id="L64">            User u = userDAO.findById(conn, e.getKey());</span>
+<span class="fc" id="L65">            String body = String.format(&quot;You have %d overdue book(s).&quot;, e.getValue());</span>
+<span class="fc" id="L66">            notifier.notify(u, body);</span>
+<span class="fc" id="L67">        }</span>
+<span class="fc" id="L68">        return counts;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

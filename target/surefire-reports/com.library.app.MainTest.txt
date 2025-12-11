@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.library.app.MainTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.275 s -- in com.library.app.MainTest

@@ -19,6 +19,8 @@ class MediaDAOTest {
 
     /**
      * Tests that addMedia returns true when the insert works.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void addMedia_returnsTrueWhenInsertSucceeds() throws Exception {
@@ -41,6 +43,8 @@ class MediaDAOTest {
 
     /**
      * Tests that removeMedia returns true when a row is deleted.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void removeMedia_returnsTrueWhenRowDeleted() throws Exception {
@@ -57,7 +61,9 @@ class MediaDAOTest {
     }
 
     /**
-     * Tests that searchMedia returns a list with a Book item.
+     * Tests that searchMedia returns a list with a Book item when a specific type filter is used.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void searchMedia_returnsBookResults() throws Exception {
@@ -86,7 +92,39 @@ class MediaDAOTest {
     }
 
     /**
+     * Tests that searchMedia works when type is "media" (no type filter branch).
+     *
+     * @throws Exception if the DAO call fails
+     */
+    @Test
+    void searchMedia_returnsResultsWhenTypeIsMedia() throws Exception {
+        Connection conn = mock(Connection.class);
+        PreparedStatement ps = mock(PreparedStatement.class);
+        ResultSet rs = mock(ResultSet.class);
+
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ps.executeQuery()).thenReturn(rs);
+
+        when(rs.next()).thenReturn(true, false);
+        when(rs.getString("type")).thenReturn("book");
+        when(rs.getInt("media_id")).thenReturn(2);
+        when(rs.getString("title")).thenReturn("Data Structures");
+        when(rs.getString("author")).thenReturn("Author X");
+        when(rs.getString("isbn")).thenReturn("DSISBN");
+        when(rs.getBoolean("available")).thenReturn(true);
+
+        MediaDAO dao = new MediaDAO();
+        List<Media> list = dao.searchMedia(conn, "data", "media");
+
+        assertNotNull(list);
+        assertEquals(1, list.size());
+        assertEquals("Data Structures", list.get(0).getTitle());
+    }
+
+    /**
      * Tests updating the availability status.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void setMediaStatus_returnsTrueWhenUpdated() throws Exception {
@@ -104,6 +142,8 @@ class MediaDAOTest {
 
     /**
      * Tests that mediaAvailable returns true when the item is available.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void mediaAvailable_returnsTrueWhenAvailable() throws Exception {
@@ -124,6 +164,8 @@ class MediaDAOTest {
 
     /**
      * Tests that mediaAvailable throws an exception when no row exists.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void mediaAvailable_throwsWhenNotFound() throws Exception {
@@ -149,7 +191,9 @@ class MediaDAOTest {
     }
 
     /**
-     * Tests that listAllMedia returns three different media types.
+     * Tests that listAllMedia returns three different media types when requesting "media" (no filter).
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void listAllMedia_returnsMixedTypes() throws Exception {
@@ -186,7 +230,40 @@ class MediaDAOTest {
     }
 
     /**
+     * Tests that listAllMedia applies a specific type filter.
+     *
+     * @throws Exception if the DAO call fails
+     */
+    @Test
+    void listAllMedia_filtersBySpecificType() throws Exception {
+        Connection conn = mock(Connection.class);
+        PreparedStatement ps = mock(PreparedStatement.class);
+        ResultSet rs = mock(ResultSet.class);
+
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ps.executeQuery()).thenReturn(rs);
+
+        when(rs.next()).thenReturn(true, false);
+        when(rs.getString("type")).thenReturn("book");
+        when(rs.getInt("media_id")).thenReturn(11);
+        when(rs.getString("title")).thenReturn("Filtered Book");
+        when(rs.getString("author")).thenReturn("Filtered Author");
+        when(rs.getString("isbn")).thenReturn("FISBN");
+        when(rs.getBoolean("available")).thenReturn(true);
+
+        MediaDAO dao = new MediaDAO();
+        List<Media> list = dao.listAllMedia(conn, "book");
+
+        assertNotNull(list);
+        assertEquals(1, list.size());
+        assertTrue(list.get(0) instanceof Book);
+        assertEquals("Filtered Book", list.get(0).getTitle());
+    }
+
+    /**
      * Tests that findById returns a media item when found.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void findById_returnsMediaWhenExists() throws Exception {
@@ -216,6 +293,8 @@ class MediaDAOTest {
 
     /**
      * Tests that findById returns null when no row exists.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void findById_returnsNullWhenNoRow() throws Exception {
@@ -235,6 +314,8 @@ class MediaDAOTest {
 
     /**
      * Tests that findActiveMedia returns borrowed media for a user.
+     *
+     * @throws Exception if the DAO call fails
      */
     @Test
     void findActiveMedia_returnsBorrowedMediaForUser() throws Exception {
@@ -260,5 +341,68 @@ class MediaDAOTest {
         assertEquals(1, list.size());
         assertTrue(list.get(0) instanceof Journal);
         assertEquals(22, list.get(0).getId());
+    }
+
+    /**
+     * Covers the branch in searchMedia where type is null
+     * (type != null is false, so no extra type condition is added).
+     *
+     * @throws Exception if the DAO call fails
+     */
+    @Test
+    void searchMedia_handlesNullType() throws Exception {
+        Connection conn = mock(Connection.class);
+        PreparedStatement ps = mock(PreparedStatement.class);
+        ResultSet rs = mock(ResultSet.class);
+
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ps.executeQuery()).thenReturn(rs);
+
+        when(rs.next()).thenReturn(true, false);
+        when(rs.getString("type")).thenReturn("book");
+        when(rs.getInt("media_id")).thenReturn(30);
+        when(rs.getString("title")).thenReturn("Null Type Book");
+        when(rs.getString("author")).thenReturn("Someone");
+        when(rs.getString("isbn")).thenReturn("NULLISBN");
+        when(rs.getBoolean("available")).thenReturn(true);
+
+        MediaDAO dao = new MediaDAO();
+        List<Media> list = dao.searchMedia(conn, "null", null);
+
+        assertNotNull(list);
+        assertEquals(1, list.size());
+        assertEquals("Null Type Book", list.get(0).getTitle());
+    }
+
+    /**
+     * Covers the branch in listAllMedia where type is null
+     * (type != null is false, so no WHERE clause is added).
+     *
+     * @throws Exception if the DAO call fails
+     */
+    @Test
+    void listAllMedia_handlesNullType() throws Exception {
+        Connection conn = mock(Connection.class);
+        PreparedStatement ps = mock(PreparedStatement.class);
+        ResultSet rs = mock(ResultSet.class);
+
+        when(conn.prepareStatement(anyString())).thenReturn(ps);
+        when(ps.executeQuery()).thenReturn(rs);
+
+        when(rs.next()).thenReturn(true, false);
+        when(rs.getString("type")).thenReturn("cd");
+        when(rs.getInt("media_id")).thenReturn(44);
+        when(rs.getString("title")).thenReturn("CD with Null Type Filter");
+        when(rs.getString("author")).thenReturn("CD Author");
+        when(rs.getString("isbn")).thenReturn("CDNULL");
+        when(rs.getBoolean("available")).thenReturn(true);
+
+        MediaDAO dao = new MediaDAO();
+        List<Media> list = dao.listAllMedia(conn, null);
+
+        assertNotNull(list);
+        assertEquals(1, list.size());
+        assertTrue(list.get(0) instanceof CD);
+        assertEquals("CD with Null Type Filter", list.get(0).getTitle());
     }
 }

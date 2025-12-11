@@ -2,6 +2,8 @@ package com.library.service;
 
 import com.library.dao.*;
 import com.library.model.Book;
+import com.library.model.Borrowing;
+import com.library.model.Fine;
 import com.library.model.Media;
 import com.library.model.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +83,48 @@ class UserServiceTest {
     }
 
     /**
+     * Tests login when the user does not exist.
+     */
+    @Test
+    void loginFailsWhenUserNotFound() throws Exception {
+        when(userDAO.findByUsername(conn, "mosub")).thenReturn(null);
+
+        boolean ok = service.login("mosub", "123");
+
+        assertFalse(ok);
+        assertNull(service.getLoggedUser());
+    }
+
+    /**
+     * Tests borrowing media when the user is not logged in.
+     */
+    @Test
+    void borrowMediaThrowsWhenNotLoggedIn() throws Exception {
+        boolean thrown = false;
+
+        try {
+            service.borrowMedia(5);
+        } catch (IllegalStateException e) {
+            thrown = true;
+        }
+
+        assertTrue(thrown);
+    }
+
+    /**
+     * Tests borrowing media when the media record is not found.
+     */
+    @Test
+    void borrowMediaFailsWhenMediaNotFound() throws Exception {
+        service.setLoggedUser(user);
+        when(mediaDAO.findById(conn, 99)).thenReturn(null);
+
+        boolean ok = service.borrowMedia(99);
+
+        assertFalse(ok);
+    }
+
+    /**
      * Tests borrowing media when conditions are valid.
      */
     @Test
@@ -99,6 +143,27 @@ class UserServiceTest {
         boolean ok = service.borrowMedia(5);
 
         assertTrue(ok);
+    }
+
+    /**
+     * Tests borrowing media when the DAO returns false.
+     */
+    @Test
+    void borrowMediaFailsWhenDaoReturnsFalse() throws Exception {
+        service.setLoggedUser(user);
+
+        Book b = new Book();
+        b.setId(6);
+        b.setAvailable(true);
+
+        when(userDAO.getUserBalance(conn, 1)).thenReturn(0.0);
+        when(borrowingDAO.hasOverdueForUser(conn, 1)).thenReturn(false);
+        when(mediaDAO.findById(conn, 6)).thenReturn(b);
+        when(borrowingDAO.borrowMedia(conn, 1, 6)).thenReturn(false);
+
+        boolean ok = service.borrowMedia(6);
+
+        assertFalse(ok);
     }
 
     /**
@@ -156,6 +221,22 @@ class UserServiceTest {
     }
 
     /**
+     * Tests returning media when the user is not logged in.
+     */
+    @Test
+    void returnMediaThrowsWhenNotLoggedIn() throws Exception {
+        boolean thrown = false;
+
+        try {
+            service.returnMedia(9);
+        } catch (IllegalStateException e) {
+            thrown = true;
+        }
+
+        assertTrue(thrown);
+    }
+
+    /**
      * Tests returning media when the DAO reports success.
      */
     @Test
@@ -166,6 +247,35 @@ class UserServiceTest {
         boolean ok = service.returnMedia(9);
 
         assertTrue(ok);
+    }
+
+    /**
+     * Tests returning media when the DAO returns false.
+     */
+    @Test
+    void returnMediaFailsWhenDaoReturnsFalse() throws Exception {
+        service.setLoggedUser(user);
+        when(borrowingDAO.returnMedia(conn, 1, 9)).thenReturn(false);
+
+        boolean ok = service.returnMedia(9);
+
+        assertFalse(ok);
+    }
+
+    /**
+     * Tests paying a fine when the user is not logged in.
+     */
+    @Test
+    void payFineThrowsWhenNotLoggedIn() throws Exception {
+        boolean thrown = false;
+
+        try {
+            service.payFine(3, 20.0);
+        } catch (IllegalStateException e) {
+            thrown = true;
+        }
+
+        assertTrue(thrown);
     }
 
     /**
@@ -182,6 +292,19 @@ class UserServiceTest {
     }
 
     /**
+     * Tests paying a fine when the DAO returns false.
+     */
+    @Test
+    void payFineFailsWhenDaoReturnsFalse() throws Exception {
+        service.setLoggedUser(user);
+        when(fineDAO.payFine(conn, 4, 1, 30.0)).thenReturn(false);
+
+        boolean ok = service.payFine(4, 30.0);
+
+        assertFalse(ok);
+    }
+
+    /**
      * Tests searching for media and receiving a non-empty list.
      */
     @Test
@@ -193,6 +316,100 @@ class UserServiceTest {
 
         assertNotNull(list);
         assertFalse(list.isEmpty());
+    }
+
+    /**
+     * Tests findBorrowings when the user is not logged in.
+     */
+    @Test
+    void findBorrowingsThrowsWhenNotLoggedIn() throws Exception {
+        boolean thrown = false;
+
+        try {
+            service.findBorrowings(1);
+        } catch (IllegalStateException e) {
+            thrown = true;
+        }
+
+        assertTrue(thrown);
+    }
+
+    /**
+     * Tests findBorrowings when the user is logged in.
+     */
+    @Test
+    void findBorrowingsReturnsListWhenLoggedIn() throws Exception {
+        service.setLoggedUser(user);
+
+        Borrowing b = new Borrowing();
+        b.setBorrowId(10);
+        when(borrowingDAO.findBorrowings(conn, 1)).thenReturn(Arrays.asList(b));
+
+        List<Borrowing> list = service.findBorrowings(1);
+
+        assertEquals(1, list.size());
+        assertEquals(10, list.get(0).getBorrowId());
+    }
+
+    /**
+     * Tests findFines when the user is not logged in.
+     */
+    @Test
+    void findFinesThrowsWhenNotLoggedIn() throws Exception {
+        boolean thrown = false;
+
+        try {
+            service.findFines(1);
+        } catch (IllegalStateException e) {
+            thrown = true;
+        }
+
+        assertTrue(thrown);
+    }
+
+    /**
+     * Tests findFines when the user is logged in.
+     */
+    @Test
+    void findFinesReturnsListWhenLoggedIn() throws Exception {
+        service.setLoggedUser(user);
+
+        Fine f = new Fine();
+        f.setId(5);
+        when(fineDAO.findFines(conn, 1)).thenReturn(Arrays.asList(f));
+
+        List<Fine> list = service.findFines(1);
+
+        assertEquals(1, list.size());
+        assertEquals(5, list.get(0).getId());
+    }
+
+    /**
+     * Tests getFineSummary when the user is not logged in.
+     */
+    @Test
+    void getFineSummaryThrowsWhenNotLoggedIn() throws Exception {
+        boolean thrown = false;
+
+        try {
+            service.getFineSummary();
+        } catch (IllegalStateException e) {
+            thrown = true;
+        }
+
+        assertTrue(thrown);
+    }
+
+    /**
+     * Tests getFineSummary when the user is logged in.
+     */
+    @Test
+    void getFineSummaryReturnsSummaryWhenLoggedIn() throws Exception {
+        service.setLoggedUser(user);
+
+        FineSummary summary = service.getFineSummary();
+
+        assertNotNull(summary);
     }
 
     /**

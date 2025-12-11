@@ -17,6 +17,7 @@ import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -126,6 +127,20 @@ class LibrarianServiceTest {
     }
 
     /**
+     * Login should fail when the user is not found.
+     *
+     * @throws Exception if login throws unexpectedly
+     */
+    @Test
+    void loginFailsWhenUserNotFound() throws Exception {
+        when(userDAO.findByUsername(conn, "lib")).thenReturn(null);
+
+        boolean ok = service.login("lib", "123");
+
+        assertFalse(ok);
+    }
+
+    /**
      * detectOverdueMedia should throw if no librarian is logged in.
      *
      * @throws Exception if call behaves unexpectedly
@@ -144,6 +159,21 @@ class LibrarianServiceTest {
     }
 
     /**
+     * detectOverdueMedia should do nothing when the list is null.
+     *
+     * @throws Exception if call fails
+     */
+    @Test
+    void detectOverdueMediaDoesNothingWhenListNull() throws Exception {
+        setLoggedLibrarian();
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(null);
+
+        service.detectOverdueMedia();
+
+        verifyNoInteractions(fineDAO);
+    }
+
+    /**
      * detectOverdueMedia should do nothing when the list is empty.
      *
      * @throws Exception if call fails
@@ -151,7 +181,7 @@ class LibrarianServiceTest {
     @Test
     void detectOverdueMediaDoesNothingWhenListEmpty() throws Exception {
         setLoggedLibrarian();
-        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(null);
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(Collections.emptyList());
 
         service.detectOverdueMedia();
 
@@ -192,6 +222,37 @@ class LibrarianServiceTest {
     }
 
     /**
+     * Existing overdue fine is not updated when no new day has passed.
+     *
+     * @throws Exception if call fails
+     */
+    @Test
+    void detectOverdueMediaSkipsUpdateWhenNoNewDay() throws Exception {
+        setLoggedLibrarian();
+
+        Borrowing b = new Borrowing();
+        b.setBorrowId(6);
+        b.setUserId(21);
+        b.setMediaId(4);
+        b.setStatus("overdue");
+        b.setDueDate(LocalDate.now().minusDays(3));
+
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(Arrays.asList(b));
+
+        Fine existing = new Fine();
+        existing.setId(200);
+        existing.setFineDate(LocalDate.now());
+
+        when(fineDAO.getBorrowingFine(conn, 6)).thenReturn(existing);
+
+        service.detectOverdueMedia();
+
+        verify(fineDAO, never()).updateFineBalance(any(Connection.class), anyInt(), anyDouble());
+        verify(fineDAO, never()).updateFineDate(any(Connection.class), anyInt());
+        verifyNoInteractions(mediaDAO);
+    }
+
+    /**
      * New fine is issued for an overdue book.
      *
      * @throws Exception if call fails
@@ -223,6 +284,59 @@ class LibrarianServiceTest {
         verify(fineDAO).issueFine(conn, 7, 30, 20.0);
         verify(borrowingDAO).updateBorrowingStatus(conn, 7, "overdue");
         verify(userDAO).updateUserBalance(conn, 30, 20.0);
+    }
+
+    /**
+     * Overdue media is skipped when the media record is missing.
+     *
+     * @throws Exception if call fails
+     */
+    @Test
+    void detectOverdueMediaSkipsWhenMediaNull() throws Exception {
+        setLoggedLibrarian();
+
+        Borrowing b = new Borrowing();
+        b.setBorrowId(10);
+        b.setUserId(60);
+        b.setMediaId(99);
+        b.setStatus("borrowed");
+        b.setDueDate(LocalDate.now().minusDays(3));
+
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(Arrays.asList(b));
+        when(fineDAO.getBorrowingFine(conn, 10)).thenReturn(null);
+        when(mediaDAO.findById(conn, 99)).thenReturn(null);
+
+        service.detectOverdueMedia();
+
+        verify(fineDAO, never()).issueFine(any(Connection.class), anyInt(), anyInt(), anyDouble());
+    }
+
+    /**
+     * Overdue media is skipped when overdue days are not positive.
+     *
+     * @throws Exception if call fails
+     */
+    @Test
+    void detectOverdueMediaSkipsWhenNoOverdueDays() throws Exception {
+        setLoggedLibrarian();
+
+        Borrowing b = new Borrowing();
+        b.setBorrowId(11);
+        b.setUserId(70);
+        b.setMediaId(15);
+        b.setStatus("borrowed");
+        b.setDueDate(LocalDate.now());
+
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(Arrays.asList(b));
+        when(fineDAO.getBorrowingFine(conn, 11)).thenReturn(null);
+
+        Book book = new Book();
+        book.setId(15);
+        when(mediaDAO.findById(conn, 15)).thenReturn(book);
+
+        service.detectOverdueMedia();
+
+        verify(fineDAO, never()).issueFine(any(Connection.class), anyInt(), anyInt(), anyDouble());
     }
 
     /**
@@ -297,5 +411,36 @@ class LibrarianServiceTest {
         verify(fineDAO).issueFine(conn, 9, 50, 15.0);
         verify(borrowingDAO).updateBorrowingStatus(conn, 9, "overdue");
         verify(userDAO).updateUserBalance(conn, 50, 15.0);
+    }
+
+    /**
+     * Branch where issuing a fine fails.
+     *
+     * @throws Exception if call fails
+     */
+    @Test
+    void detectOverdueMediaHandlesIssueFineFailure() throws Exception {
+        setLoggedLibrarian();
+
+        Borrowing b = new Borrowing();
+        b.setBorrowId(12);
+        b.setUserId(80);
+        b.setMediaId(16);
+        b.setStatus("borrowed");
+        b.setDueDate(LocalDate.now().minusDays(2));
+
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(Arrays.asList(b));
+        when(fineDAO.getBorrowingFine(conn, 12)).thenReturn(null);
+
+        Book book = new Book();
+        book.setId(16);
+        when(mediaDAO.findById(conn, 16)).thenReturn(book);
+
+        when(fineDAO.issueFine(conn, 12, 80, 20.0)).thenReturn(false);
+
+        service.detectOverdueMedia();
+
+        verify(borrowingDAO, never()).updateBorrowingStatus(conn, 12, "overdue");
+        verify(userDAO, never()).updateUserBalance(conn, 80, 20.0);
     }
 }

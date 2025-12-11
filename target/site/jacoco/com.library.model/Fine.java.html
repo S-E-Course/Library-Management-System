@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Fine.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.model</a> &gt; <span class="el_source">Fine.java</span></div><h1>Fine.java</h1><pre class="source lang-java linenums">package com.library.model;
+
+import java.time.LocalDate;
+
+/**
+ * Represents a fine linked to a borrowing.
+ * Holds the amount, payment status, and the date the fine was recorded.
+ */
+<span class="fc" id="L9">public class Fine {</span>
+    private int id;
+    private int userId;
+    private int borrowId;
+    private double amount;
+    private boolean paid;
+    private LocalDate fineDate;
+
+    /** @return fine identifier */
+<span class="fc" id="L18">    public int getId() { return id; }</span>
+
+    /** @param id fine identifier */
+<span class="fc" id="L21">    public void setId(int id) { this.id = id; }</span>
+
+    /** @return user identifier */
+<span class="fc" id="L24">    public int getUserId() { return userId; }</span>
+
+    /** @param userId user identifier */
+<span class="fc" id="L27">    public void setUserId(int userId) { this.userId = userId; }</span>
+
+    /** @return borrowing identifier */
+<span class="fc" id="L30">    public int getBorrowId() { return borrowId; }</span>
+
+    /** @param borrowId borrowing identifier */
+<span class="fc" id="L33">    public void setBorrowId(int borrowId) { this.borrowId = borrowId; }</span>
+
+    /** @return fine amount */
+<span class="fc" id="L36">    public double getAmount() { return amount; }</span>
+
+    /** @param amount fine amount */
+<span class="fc" id="L39">    public void setAmount(double amount) { this.amount = amount; }</span>
+
+    /** @return true if the fine is paid */
+<span class="fc" id="L42">    public boolean isPaid() { return paid; }</span>
+
+    /** @param paid payment status */
+<span class="fc" id="L45">    public void setPaid(boolean paid) { this.paid = paid; }</span>
+
+    /** @return date of the fine */
+<span class="fc" id="L48">    public LocalDate getFineDate() { return fineDate; }</span>
+
+    /** @param fineDate date of the fine */
+<span class="fc" id="L51">    public void setFineDate(LocalDate fineDate) { this.fineDate = fineDate; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

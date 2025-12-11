@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DotenvEmailServer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.service</a> &gt; <span class="el_source">DotenvEmailServer.java</span></div><h1>DotenvEmailServer.java</h1><pre class="source lang-java linenums">package com.library.service;
+
+import io.github.cdimascio.dotenv.Dotenv;
+
+/**
+ * Email server that reads SMTP credentials from a .env file.
+ * Looks for EMAIL_USERNAME and EMAIL_PASSWORD and uses them to
+ * configure an EmailService instance.
+ */
+public class DotenvEmailServer implements EmailServer {
+
+    private final EmailService emailService;
+
+    /**
+     * Loads credentials from the .env file and creates the email service.
+     *
+     * @throws IllegalStateException if required fields are missing
+     */
+<span class="fc" id="L19">    public DotenvEmailServer() {</span>
+<span class="fc" id="L20">        Dotenv dotenv = tryLoad();</span>
+
+<span class="fc" id="L22">        String username = dotenv.get(&quot;EMAIL_USERNAME&quot;);</span>
+<span class="fc" id="L23">        String password = dotenv.get(&quot;EMAIL_PASSWORD&quot;);</span>
+<span class="pc bpc" id="L24" title="1 of 4 branches missed.">        if (username == null || password == null) {</span>
+<span class="fc" id="L25">            throw new IllegalStateException(&quot;Missing EMAIL_USERNAME or EMAIL_PASSWORD in .env&quot;);</span>
+        }
+<span class="fc" id="L27">        this.emailService = new EmailService(username, password);</span>
+<span class="fc" id="L28">    }</span>
+
+    /**
+     * Tries to load a .env file from a knwon psth.
+     *
+     * @return loaded Dotenv instance
+     */
+    private Dotenv tryLoad() {
+        try {
+<span class="fc" id="L37">            return Dotenv.load();</span>
+<span class="nc" id="L38">        } catch (Exception ignored) {}</span>
+        try {
+<span class="nc" id="L40">            return Dotenv.configure().directory(&quot;target/classes&quot;).load();</span>
+<span class="nc" id="L41">        } catch (Exception ignored) {}</span>
+<span class="nc" id="L42">        return Dotenv.configure().load();</span>
+    }
+
+    /**
+     * Sends an email using the configured EmailService.
+     *
+     * @param to recipient email
+     * @param subject email subject
+     * @param body email body text
+     */
+    @Override
+    public void send(String to, String subject, String body) {
+<span class="fc" id="L54">        emailService.sendEmail(to, subject, body);</span>
+<span class="fc" id="L55">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

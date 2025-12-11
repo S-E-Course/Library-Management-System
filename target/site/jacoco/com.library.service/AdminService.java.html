@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.service</a> &gt; <span class="el_source">AdminService.java</span></div><h1>AdminService.java</h1><pre class="source lang-java linenums">package com.library.service;
+
+import com.library.dao.*;
+import com.library.model.*;
+import com.library.util.DatabaseConnection;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
+/**
+ * Service for administrator tasks.
+ * Handles media management, user management, and overdue reminder actions.
+ */
+public class AdminService {
+
+    private final Connection conn;
+<span class="fc" id="L18">    private final UserDAO userDAO = new UserDAO();</span>
+<span class="fc" id="L19">    private final MediaDAO mediaDAO = new MediaDAO();</span>
+    private User loggedAdmin;
+<span class="fc" id="L21">    BorrowingDAO borrowingDAO = new BorrowingDAO();</span>
+
+    /**
+     * Creates a new AdminService and opens a database connection.
+     *
+     * @throws Exception if the connection cannot be opened
+     */
+<span class="fc" id="L28">    public AdminService() throws Exception {</span>
+<span class="fc" id="L29">        this.conn = DatabaseConnection.connect();</span>
+<span class="fc" id="L30">    }</span>
+
+    /**
+     * Logs in an administrator.
+     *
+     * @param username admin username
+     * @param passwordHash stored password value
+     * @return true if login succeeds
+     * @throws Exception if a database error occurs
+     */
+    public boolean login(String username, String passwordHash) throws Exception {
+<span class="fc" id="L41">        User admin = userDAO.findByUsername(conn, username);</span>
+<span class="fc bfc" id="L42" title="All 4 branches covered.">        if (admin != null &amp;&amp; admin.getPasswordHash().equals(passwordHash)) {</span>
+<span class="fc" id="L43">            loggedAdmin = admin;</span>
+<span class="fc" id="L44">            return true;</span>
+        }
+<span class="fc" id="L46">        return false;</span>
+    }
+
+    /**
+     * Logs out the administrator and closes the connection.
+     *
+     * @throws SQLException if disconnect fails
+     */
+    public void logout() throws SQLException {
+<span class="fc" id="L55">        loggedAdmin = null;</span>
+<span class="fc" id="L56">        DatabaseConnection.disconnect();</span>
+<span class="fc" id="L57">    }</span>
+
+    /**
+     * Checks if an admin is logged in.
+     *
+     * @return true if an admin is logged in
+     */
+    public boolean isLoggedIn() {
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        return loggedAdmin != null;</span>
+    }
+
+    /**
+     * Adds a media item.
+     *
+     * @param media media object
+     * @return true if added
+     * @throws Exception if not logged in or a database error occurs
+     */
+    public boolean addMedia(Media media) throws Exception {
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if (loggedAdmin == null)</span>
+<span class="fc" id="L77">            throw new IllegalStateException(&quot;Admin not logged in&quot;);</span>
+<span class="fc" id="L78">        return mediaDAO.addMedia(conn, media);</span>
+    }
+
+    /**
+     * Searches media by keyword and type.
+     *
+     * @param keyword search text
+     * @param type media type or media for all
+     * @return list of matching media
+     * @throws Exception if a database error occurs
+     */
+    public List&lt;Media&gt; searchMedia(String keyword, String type) throws Exception {
+<span class="fc" id="L90">        return mediaDAO.searchMedia(conn, keyword, type);</span>
+    }
+
+    /**
+     * Removes a media item if it is available.
+     *
+     * @param mediaId media identifier
+     * @return true if removed
+     * @throws Exception if not logged in or a database error occurs
+     */
+    public boolean removeMedia(int mediaId) throws Exception {
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        if (loggedAdmin == null)</span>
+<span class="fc" id="L102">            throw new IllegalStateException(&quot;Admin not logged in&quot;);</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (!mediaDAO.mediaAvailable(conn, mediaId)) {</span>
+<span class="fc" id="L104">            System.out.println(&quot;Media is currently borrowed.&quot;);</span>
+<span class="fc" id="L105">            return false;</span>
+        }
+<span class="fc" id="L107">        return mediaDAO.removeMedia(conn, mediaId);</span>
+    }
+
+    /**
+     * Lists all media filtered by type.
+     *
+     * @param type media type or media for all
+     * @return list of media
+     * @throws Exception if a database error occurs
+     */
+    public List&lt;Media&gt; listAllMedia(String type) throws Exception {
+<span class="fc" id="L118">        return mediaDAO.listAllMedia(conn, type);</span>
+    }
+
+    /**
+     * Adds a user.
+     *
+     * @param username username
+     * @param email email
+     * @param passwordHash stored password
+     * @param role user role
+     * @return true if added
+     * @throws Exception if not logged in or a database error occurs
+     */
+    public boolean addUser(String username, String email, String passwordHash, String role) throws Exception {
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        if (loggedAdmin == null)</span>
+<span class="fc" id="L133">            throw new IllegalStateException(&quot;Admin not logged in&quot;);</span>
+
+<span class="fc" id="L135">        User u = new User();</span>
+<span class="fc" id="L136">        u.setUsername(username);</span>
+<span class="fc" id="L137">        u.setEmail(email);</span>
+<span class="fc" id="L138">        u.setPasswordHash(passwordHash);</span>
+<span class="fc" id="L139">        u.setRole(role);</span>
+<span class="fc" id="L140">        u.setBalance(0.0);</span>
+
+<span class="fc" id="L142">        return userDAO.addUser(conn, u);</span>
+    }
+
+    /**
+     * Deletes a user if no balance or active media exist.
+     *
+     * @param userId user identifier
+     * @return true if deleted
+     * @throws Exception if not logged in or a database error occurs
+     */
+    public boolean removeUser(int userId) throws Exception {
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        if (loggedAdmin == null)</span>
+<span class="fc" id="L154">            throw new IllegalStateException(&quot;Admin not logged in&quot;);</span>
+
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        if (userDAO.getUserBalance(conn, userId) &gt; 0) {</span>
+<span class="fc" id="L157">            System.out.println(&quot;User has unpaid balance.&quot;);</span>
+<span class="fc" id="L158">            return false;</span>
+        }
+
+<span class="fc" id="L161">        List&lt;Media&gt; medialist = mediaDAO.findActiveMedia(conn, userId);</span>
+<span class="pc bpc" id="L162" title="1 of 4 branches missed.">        if (medialist != null &amp;&amp; !medialist.isEmpty()) {</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">            for (Media m : medialist) {</span>
+<span class="fc" id="L164">                mediaDAO.setMediaStatus(conn, m.getId(), true);</span>
+<span class="fc" id="L165">            }</span>
+        }
+
+<span class="fc" id="L168">        return userDAO.deleteUser(conn, userId);</span>
+    }
+
+    /**
+     * Lists all users.
+     *
+     * @return list of users
+     * @throws Exception if not logged in or a database error occurs
+     */
+    public List&lt;User&gt; listUsers() throws Exception {
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        if (loggedAdmin == null)</span>
+<span class="fc" id="L179">            throw new IllegalStateException(&quot;Admin not logged in&quot;);</span>
+<span class="fc" id="L180">        return userDAO.getAllUsers(conn);</span>
+    }
+
+    /**
+     * Sends overdue reminders using .env settings.
+     *
+     * @return number of users notified
+     * @throws Exception if sending fails
+     */
+    public int sendOverdueRemindersFromEnv() throws Exception {
+<span class="nc" id="L190">        EmailServer emailServer = new DotenvEmailServer();</span>
+<span class="nc" id="L191">        EmailNotifier notifier = new EmailNotifier(emailServer);</span>
+<span class="nc" id="L192">        ReminderService reminder = new ReminderService(conn, borrowingDAO, userDAO, notifier);</span>
+<span class="nc" id="L193">        return reminder.sendOverdueReminders().size();</span>
+    }
+
+    /**
+     * Sends overdue reminders using a given email server.
+     *
+     * @param emailServer email server to use
+     * @return number of users notified
+     * @throws Exception if sending fails
+     */
+    public int sendOverdueReminders(EmailServer emailServer) throws Exception {
+<span class="fc" id="L204">        EmailNotifier notifier = new EmailNotifier(emailServer);</span>
+<span class="fc" id="L205">        ReminderService reminder = new ReminderService(conn, borrowingDAO, userDAO, notifier);</span>
+<span class="fc" id="L206">        return reminder.sendOverdueReminders().size();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

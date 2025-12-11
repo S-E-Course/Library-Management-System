@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FineReportService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.service</a> &gt; <span class="el_source">FineReportService.java</span></div><h1>FineReportService.java</h1><pre class="source lang-java linenums">package com.library.service;
+
+import com.library.dao.BorrowingDAO;
+import com.library.dao.FineDAO;
+import com.library.dao.MediaDAO;
+import com.library.model.Borrowing;
+import com.library.model.Fine;
+import com.library.model.Media;
+
+import java.sql.Connection;
+import java.util.List;
+
+/**
+ * Creates a summary of unpaid fines for a user.
+ * Each fine is grouped by the media type such as book, cd, or journal.
+ */
+public class FineReportService {
+
+    private final Connection conn;
+    private final FineDAO fineDAO;
+    private final BorrowingDAO borrowingDAO;
+    private final MediaDAO mediaDAO;
+
+    /**
+     * Builds a report service with the required DAOs.
+     *
+     * @param conn         database connection
+     * @param fineDAO      DAO for fines
+     * @param borrowingDAO DAO for borrowings
+     * @param mediaDAO     DAO for media details
+     */
+<span class="fc" id="L32">    public FineReportService(Connection conn, FineDAO fineDAO, BorrowingDAO borrowingDAO, MediaDAO mediaDAO) {</span>
+<span class="fc" id="L33">        this.conn = conn;</span>
+<span class="fc" id="L34">        this.fineDAO = fineDAO;</span>
+<span class="fc" id="L35">        this.borrowingDAO = borrowingDAO;</span>
+<span class="fc" id="L36">        this.mediaDAO = mediaDAO;</span>
+<span class="fc" id="L37">    }</span>
+
+    /**
+     * Creates a fine summary for a user.
+     * Only unpaid fines with a positive amount are included.
+     *
+     * @param userId user identifier
+     * @return fine summary for the user
+     * @throws Exception if database access fails
+     */
+    public FineSummary buildFineSummaryForUser(int userId) throws Exception {
+<span class="fc" id="L48">        List&lt;Fine&gt; fines = fineDAO.findFines(conn, userId);</span>
+<span class="fc" id="L49">        FineSummary summary = new FineSummary();</span>
+<span class="fc bfc" id="L50" title="All 4 branches covered.">        if (fines == null || fines.isEmpty()) return summary;</span>
+
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        for (Fine f : fines) {</span>
+<span class="pc bpc" id="L53" title="1 of 6 branches missed.">            if (f == null || f.isPaid() || f.getAmount() &lt;= 0) continue;</span>
+
+<span class="fc" id="L55">            Borrowing b = borrowingDAO.getFineBorrowing(conn, f.getId());</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">            if (b == null) continue;</span>
+
+<span class="fc" id="L58">            Media m = mediaDAO.findById(conn, b.getMediaId());</span>
+<span class="pc bpc" id="L59" title="1 of 4 branches missed.">            String type = (m == null || m.getType() == null) ? &quot;unknown&quot; : m.getType();</span>
+
+<span class="fc" id="L61">            summary.add(type, f.getAmount());</span>
+<span class="fc" id="L62">        }</span>
+<span class="fc" id="L63">        return summary;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

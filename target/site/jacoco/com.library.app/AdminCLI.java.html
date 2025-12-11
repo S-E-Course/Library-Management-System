@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminCLI.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.app</a> &gt; <span class="el_source">AdminCLI.java</span></div><h1>AdminCLI.java</h1><pre class="source lang-java linenums">package com.library.app;
+
+import com.library.model.*;
+import com.library.model.User;
+import com.library.service.AdminService;
+import com.library.util.DisplayPrinter;
+import com.library.util.ValidationHelper;
+
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ * Provides the admin command-line menu and actions.
+ */
+public class AdminCLI {
+    private final Scanner in;
+    private final AdminService admin;
+
+    /**
+     * Creates an admin menu interface.
+     *
+     * @param in scanner used for input
+     * @param admin service used for admin actions
+     */
+<span class="fc" id="L25">    public AdminCLI(Scanner in, AdminService admin) {</span>
+<span class="fc" id="L26">        this.in = in;</span>
+<span class="fc" id="L27">        this.admin = admin;</span>
+<span class="fc" id="L28">    }</span>
+
+    /**
+     * Shows the admin menu and handles user choices.
+     */
+    public void run() {
+        while (true) {
+<span class="fc" id="L35">            MenuPrinter.clear();</span>
+<span class="fc" id="L36">            MenuPrinter.banner(&quot;Admin Menu&quot;);</span>
+<span class="fc" id="L37">            System.out.println(&quot;1) Add Media&quot;);</span>
+<span class="fc" id="L38">            System.out.println(&quot;2) List Media&quot;);</span>
+<span class="fc" id="L39">            System.out.println(&quot;3) Remove Media&quot;);</span>
+<span class="fc" id="L40">            System.out.println(&quot;4) Add User&quot;);</span>
+<span class="fc" id="L41">            System.out.println(&quot;5) List Users&quot;);</span>
+<span class="fc" id="L42">            System.out.println(&quot;6) Remove User&quot;);</span>
+<span class="fc" id="L43">            System.out.println(&quot;7) Send Overdue Reminders&quot;);</span>
+<span class="fc" id="L44">            System.out.println(&quot;0) Logout&quot;);</span>
+
+<span class="fc" id="L46">            int choice = InputHelper.readInt(in, &quot;Choose: &quot;, 0, 7);</span>
+
+            try {
+<span class="pc bpc" id="L49" title="1 of 9 branches missed.">                switch (choice) {</span>
+                    case 1:
+<span class="fc" id="L51">                        addMediaFlow();</span>
+<span class="fc" id="L52">                        break;</span>
+                    case 2:
+<span class="fc" id="L54">                        listMediaFlow();</span>
+<span class="fc" id="L55">                        break;</span>
+                    case 3:
+<span class="fc" id="L57">                        removeMediaFlow();</span>
+<span class="fc" id="L58">                        break;</span>
+                    case 4:
+<span class="fc" id="L60">                        addUserFlow();</span>
+<span class="fc" id="L61">                        break;</span>
+                    case 5:
+<span class="fc" id="L63">                        listUsersFlow();</span>
+<span class="fc" id="L64">                        break;</span>
+                    case 6:
+<span class="fc" id="L66">                        removeUserFlow();</span>
+<span class="fc" id="L67">                        break;</span>
+                    case 7:
+<span class="fc" id="L69">                        sendRemindersFlow();</span>
+<span class="fc" id="L70">                        break;</span>
+                    case 0:
+<span class="fc" id="L72">                        return;</span>
+                    default:
+                        break;
+                }
+<span class="fc" id="L76">            } catch (Exception e) {</span>
+<span class="fc" id="L77">                System.out.println(&quot;Operation failed: &quot; + e.getMessage());</span>
+<span class="fc" id="L78">                InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L79">            }</span>
+<span class="fc" id="L80">        }</span>
+    }
+
+    /**
+     * Reads media details and adds a new media item.
+     *
+     * @throws Exception if adding fails
+     */
+    private void addMediaFlow() throws Exception {
+<span class="fc" id="L89">        MenuPrinter.title(&quot;Add Media&quot;);</span>
+<span class="fc" id="L90">        String title  = InputHelper.readNonEmpty(in, &quot;Title: &quot;);</span>
+<span class="fc" id="L91">        String author = InputHelper.readNonEmpty(in, &quot;Author: &quot;);</span>
+<span class="fc" id="L92">        String isbn   = InputHelper.readNonEmpty(in, &quot;ISBN: &quot;);</span>
+<span class="fc" id="L93">        String type   = InputHelper.readNonEmpty(in, &quot;Type (book|cd|journal): &quot;).toLowerCase();</span>
+
+        Media m;
+<span class="fc bfc" id="L96" title="All 3 branches covered.">        switch (type) {</span>
+        case &quot;cd&quot;:
+<span class="fc" id="L98">            m = new CD();</span>
+<span class="fc" id="L99">            break;</span>
+        case &quot;journal&quot;:
+<span class="fc" id="L101">            m = new Journal();</span>
+<span class="fc" id="L102">            break;</span>
+        default:
+<span class="fc" id="L104">            m = new Book();</span>
+            break;
+        }
+<span class="fc" id="L107">        m.setTitle(title);</span>
+<span class="fc" id="L108">        m.setAuthor(author);</span>
+<span class="fc" id="L109">        m.setIsbn(isbn);</span>
+<span class="fc" id="L110">        boolean ok = admin.addMedia(m);</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        System.out.println(ok ? &quot;Media added.&quot; : &quot;Failed to add media.&quot;);</span>
+<span class="fc" id="L112">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L113">    }</span>
+
+    /**
+     * Shows all media filtered by type.
+     *
+     * @throws Exception if loading media fails
+     */
+    private void listMediaFlow() throws Exception {
+<span class="fc" id="L121">        MenuPrinter.title(&quot;Media&quot;);</span>
+<span class="fc" id="L122">        String type = InputHelper.readNonEmpty(in, &quot;Filter Type (book|cd|journal|media): &quot;).toLowerCase();</span>
+<span class="fc" id="L123">        List&lt;Media&gt; mediaList = admin.listAllMedia(type);</span>
+<span class="fc" id="L124">        DisplayPrinter.printMediaList(mediaList);</span>
+<span class="fc" id="L125">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L126">    }</span>
+
+    /**
+     * Reads an ID and removes the selected media item.
+     *
+     * @throws Exception if removing fails
+     */
+    private void removeMediaFlow() throws Exception {
+<span class="fc" id="L134">        MenuPrinter.title(&quot;Remove Media&quot;);</span>
+<span class="fc" id="L135">        int mediaId = InputHelper.readInt(in, &quot;Media ID: &quot;, 1, Integer.MAX_VALUE);</span>
+<span class="fc" id="L136">        boolean ok = admin.removeMedia(mediaId);</span>
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        System.out.println(ok ? &quot;Media removed.&quot; : &quot;Failed to remove media.&quot;);</span>
+<span class="fc" id="L138">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L139">    }</span>
+
+    /**
+     * Reads user info and adds a new user.
+     *
+     * @throws Exception if adding fails
+     */
+    private void addUserFlow() throws Exception {
+<span class="fc" id="L147">        MenuPrinter.title(&quot;Add User&quot;);</span>
+<span class="fc" id="L148">        String username = InputHelper.readNonEmpty(in, &quot;Username: &quot;);</span>
+<span class="fc" id="L149">        String email    = InputHelper.readNonEmpty(in, &quot;Email: &quot;);</span>
+<span class="fc" id="L150">        String password = InputHelper.readPassword(in, &quot;Password: &quot;);</span>
+<span class="fc" id="L151">        String role     = InputHelper.readNonEmpty(in, &quot;Role (admin|librarian|user): &quot;).toLowerCase();</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (!ValidationHelper.isValidEmail(email)) {</span>
+<span class="fc" id="L153">            System.out.println(&quot;Invalid email format.&quot;);</span>
+<span class="fc" id="L154">            InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L155">            return;</span>
+        }
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        if (!ValidationHelper.isValidRole(role)) {</span>
+<span class="fc" id="L158">            System.out.println(&quot;Invalid role. Must be admin, librarian, or user.&quot;);</span>
+<span class="fc" id="L159">            InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L160">            return;</span>
+        }
+<span class="fc" id="L162">        boolean ok = admin.addUser(username, email, password, role);</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">        System.out.println(ok ? &quot;User added.&quot; : &quot;Failed to add user.&quot;);</span>
+<span class="fc" id="L164">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L165">    }</span>
+
+    /**
+     * Lists all users with basic details.
+     *
+     * @throws Exception if loading users fails
+     */
+    private void listUsersFlow() throws Exception {
+<span class="fc" id="L173">        MenuPrinter.title(&quot;Users&quot;);</span>
+<span class="fc" id="L174">        List&lt;User&gt; users = admin.listUsers();</span>
+<span class="pc bpc" id="L175" title="1 of 4 branches missed.">        if (users == null || users.isEmpty()) {</span>
+<span class="fc" id="L176">            System.out.println(&quot;(No users)&quot;);</span>
+        } else {
+<span class="fc bfc" id="L178" title="All 2 branches covered.">            for (User u : users) {</span>
+<span class="fc" id="L179">                System.out.printf(&quot;#%d  %s | %s | role=%s | balance=%.2f%n&quot;,</span>
+<span class="fc" id="L180">                        u.getUserId(), u.getUsername(), u.getEmail(), u.getRole(), u.getBalance());</span>
+<span class="fc" id="L181">            }</span>
+        }
+<span class="fc" id="L183">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L184">    }</span>
+
+    /**
+     * Reads a user ID and removes that user.
+     *
+     * @throws Exception if removing fails
+     */
+    private void removeUserFlow() throws Exception {
+<span class="fc" id="L192">        MenuPrinter.title(&quot;Remove User&quot;);</span>
+<span class="fc" id="L193">        int userId = InputHelper.readInt(in, &quot;User ID: &quot;, 1, Integer.MAX_VALUE);</span>
+<span class="fc" id="L194">        boolean ok = admin.removeUser(userId);</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">        System.out.println(ok ? &quot;User removed.&quot; : &quot;Failed to remove user.&quot;);</span>
+<span class="fc" id="L196">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L197">    }</span>
+
+    /**
+     * Sends overdue reminder emails.
+     *
+     * @throws Exception if sending fails
+     */
+    private void sendRemindersFlow() throws Exception {
+<span class="fc" id="L205">        MenuPrinter.title(&quot;Sending Overdue Reminders&quot;);</span>
+<span class="fc" id="L206">        int notified = admin.sendOverdueRemindersFromEnv();</span>
+<span class="fc" id="L207">        System.out.println(&quot;Reminders sent to &quot; + notified + &quot; user(s).&quot;);</span>
+<span class="fc" id="L208">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L209">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

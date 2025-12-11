@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DisplayPrinter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.util</a> &gt; <span class="el_source">DisplayPrinter.java</span></div><h1>DisplayPrinter.java</h1><pre class="source lang-java linenums">package com.library.util;
+
+import java.sql.Connection;
+import java.util.List;
+
+import com.library.dao.MediaDAO;
+import com.library.model.Borrowing;
+import com.library.model.Fine;
+import com.library.model.Media;
+import com.library.service.FineSummary;
+
+/**
+ * Console printing helpers for media lists, borrowings, fines,
+ * and fine summaries. Used by the CLI layer.
+ */
+<span class="nc" id="L16">public class DisplayPrinter {</span>
+
+    /** DAO used to look up media details when printing borrowings. */
+<span class="fc" id="L19">    private static final MediaDAO mediaDAO = new MediaDAO();</span>
+
+    /**
+     * Prints a list of media items. Shows a placeholder when empty.
+     *
+     * @param mediaList list of media items
+     */
+    public static void printMediaList(List&lt;Media&gt; mediaList) {
+<span class="fc bfc" id="L27" title="All 4 branches covered.">        if (mediaList == null || mediaList.isEmpty()) {</span>
+<span class="fc" id="L28">            System.out.println(&quot;(No matching media)&quot;);</span>
+<span class="fc" id="L29">            return;</span>
+        }
+<span class="fc bfc" id="L31" title="All 2 branches covered.">        for (Media m : mediaList) {</span>
+<span class="fc" id="L32">            System.out.printf(&quot;#%d  %s | %s | %s | %s | %s%n&quot;,</span>
+<span class="fc" id="L33">                    m.getId(), m.getTitle(), m.getAuthor(), m.getIsbn(), m.getType(),</span>
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">                    m.isAvailable() ? &quot;Available&quot; : &quot;Borrowed&quot;);</span>
+<span class="fc" id="L35">        }</span>
+<span class="fc" id="L36">    }</span>
+
+    /**
+     * Prints borrowed media with due date and status. Skips returned items.
+     *
+     * @param conn _ active database connection
+     * @param borrowings list of borrowing records
+     * @throws Exception if media lookup fails
+     */
+    public static void printBorrowedMedia(Connection conn, List&lt;Borrowing&gt; borrowings) throws Exception {
+<span class="fc bfc" id="L46" title="All 4 branches covered.">        if (borrowings == null || borrowings.isEmpty()) {</span>
+<span class="fc" id="L47">            System.out.println(&quot;(You have no borrowed books)&quot;);</span>
+<span class="fc" id="L48">            return;</span>
+        }
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        for (Borrowing b : borrowings) {</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">            if (!&quot;returned&quot;.equalsIgnoreCase(b.getStatus())) {</span>
+<span class="fc" id="L52">                Media m = mediaDAO.findById(conn, b.getMediaId());</span>
+<span class="fc" id="L53">                System.out.printf(&quot;#%d  %s | Due: %s | Status: %s%n&quot;,</span>
+<span class="fc" id="L54">                        m.getId(), m.getTitle(), b.getDueDate(),</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">                        b.isOverdue() ? &quot;Overdue (Can't return)&quot; : &quot;On Time&quot;);</span>
+            }
+<span class="fc" id="L57">        }</span>
+<span class="fc" id="L58">    }</span>
+
+    /**
+     * Prints a list of fines.
+     *
+     * @param fines list of fines
+     */
+    public static void printFines(List&lt;Fine&gt; fines) {
+<span class="fc bfc" id="L66" title="All 4 branches covered.">        if (fines == null || fines.isEmpty()) {</span>
+<span class="fc" id="L67">            System.out.println(&quot;(No fines found)&quot;);</span>
+<span class="fc" id="L68">            return;</span>
+        }
+
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        for (Fine f : fines) {</span>
+<span class="fc" id="L72">            System.out.printf(</span>
+                &quot;Fine #%d | Amount: %.2f NIS | Paid: %s%n&quot;,
+<span class="fc" id="L74">                f.getId(),</span>
+<span class="fc" id="L75">                f.getAmount(),</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">                f.isPaid() ? &quot;Yes&quot; : &quot;No&quot;</span>
+            );
+<span class="fc" id="L78">        }</span>
+<span class="fc" id="L79">    }</span>
+
+    /**
+     * Prints a mixed-media fine summary with per-type totals and a final total.
+     *
+     * @param s fine summary
+     */
+    public static void printFineSummary(FineSummary s) {
+<span class="fc" id="L87">        System.out.println();</span>
+<span class="fc" id="L88">        System.out.println(&quot;---- Overdue Fine Summary (by media type) ----&quot;);</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        if (s.getPerType().isEmpty()) {</span>
+<span class="fc" id="L90">            System.out.println(&quot;No unpaid fines.&quot;);</span>
+        } else {
+<span class="fc" id="L92">            s.getPerType().forEach((type, amt) -&gt;</span>
+<span class="fc" id="L93">                System.out.printf(&quot;  %-10s : %.2f%n&quot;, type, amt)</span>
+            );
+<span class="fc" id="L95">            System.out.println(&quot;----------------------------------------------&quot;);</span>
+<span class="fc" id="L96">            System.out.printf(&quot;  TOTAL      : %.2f%n&quot;, s.getTotal());</span>
+        }
+<span class="fc" id="L98">        System.out.println();</span>
+<span class="fc" id="L99">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

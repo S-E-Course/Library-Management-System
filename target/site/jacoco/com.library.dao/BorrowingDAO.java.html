@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BorrowingDAO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.dao</a> &gt; <span class="el_source">BorrowingDAO.java</span></div><h1>BorrowingDAO.java</h1><pre class="source lang-java linenums">package com.library.dao;
+
+import com.library.model.Borrowing;
+import com.library.model.Media;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Handles borrowing and returning of media.
+ */
+<span class="fc" id="L13">public class BorrowingDAO {</span>
+
+<span class="fc" id="L15">    private final MediaDAO mediaDAO = new MediaDAO();</span>
+
+    /**
+     * Returns all overdue borrowings.
+     * A borrowing is overdue if the due date has passed or if its status is already marked overdue.
+     *
+     * @param conn active database connection
+     * @return list of overdue borrowings
+     * @throws Exception if a database problem occurs
+     */
+    public List&lt;Borrowing&gt; findOverdueMedia(Connection conn) throws Exception {
+<span class="fc" id="L26">        List&lt;Borrowing&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L27">        String sql = &quot;SELECT * FROM borrowings &quot; +</span>
+                     &quot;WHERE (status = 'borrowed' AND due_date &lt; CURRENT_DATE) &quot; +
+                     &quot;OR (status = 'overdue')&quot;;
+
+<span class="fc" id="L31">        try (Statement stmt = conn.createStatement();</span>
+<span class="fc" id="L32">             ResultSet rs = stmt.executeQuery(sql)) {</span>
+
+<span class="fc bfc" id="L34" title="All 2 branches covered.">            while (rs.next()) {</span>
+<span class="fc" id="L35">                Borrowing b = new Borrowing();</span>
+<span class="fc" id="L36">                b.setBorrowId(rs.getInt(&quot;borrow_id&quot;));</span>
+<span class="fc" id="L37">                b.setUserId(rs.getInt(&quot;user_id&quot;));</span>
+<span class="fc" id="L38">                b.setMediaId(rs.getInt(&quot;media_id&quot;));</span>
+<span class="fc" id="L39">                b.setBorrowDate(rs.getDate(&quot;borrow_date&quot;).toLocalDate());</span>
+<span class="fc" id="L40">                b.setDueDate(rs.getDate(&quot;due_date&quot;).toLocalDate());</span>
+<span class="fc" id="L41">                Date ret = rs.getDate(&quot;return_date&quot;);</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">                if (ret != null) b.setReturnDate(ret.toLocalDate());</span>
+<span class="fc" id="L43">                b.setStatus(rs.getString(&quot;status&quot;));</span>
+<span class="fc" id="L44">                list.add(b);</span>
+<span class="fc" id="L45">            }</span>
+        }
+<span class="fc" id="L47">        return list;</span>
+    }
+
+    /**
+     * Returns all borrowings for a specific user.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @return list of borrowings
+     * @throws Exception if a database problem occurs
+     */
+    public List&lt;Borrowing&gt; findBorrowings(Connection conn, int userId) throws Exception {
+<span class="fc" id="L59">        List&lt;Borrowing&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L60">        String sql = &quot;SELECT * FROM borrowings WHERE user_id = ?&quot;;</span>
+
+<span class="fc" id="L62">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L63">            stmt.setInt(1, userId);</span>
+<span class="fc" id="L64">            try (ResultSet rs = stmt.executeQuery()) {</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">                while (rs.next()) {</span>
+<span class="fc" id="L66">                    Borrowing b = new Borrowing();</span>
+<span class="fc" id="L67">                    b.setBorrowId(rs.getInt(&quot;borrow_id&quot;));</span>
+<span class="fc" id="L68">                    b.setStatus(rs.getString(&quot;status&quot;));</span>
+<span class="fc" id="L69">                    b.setDueDate(rs.getDate(&quot;due_date&quot;).toLocalDate());</span>
+<span class="fc" id="L70">                    b.setUserId(userId);</span>
+<span class="fc" id="L71">                    b.setMediaId(rs.getInt(&quot;media_id&quot;));</span>
+<span class="fc" id="L72">                    list.add(b);</span>
+<span class="fc" id="L73">                }</span>
+            }
+        }
+<span class="fc" id="L76">        return list;</span>
+    }
+
+    /**
+     * Finds an active borrowing for the user and media.
+     * Active means status borrowed or overdue.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @param mediaId media identifier
+     * @return borrowing or null if none found
+     * @throws Exception if a database problem occurs
+     */
+    public Borrowing findActiveBorrowing(Connection conn, int userId, int mediaId) throws Exception {
+<span class="fc" id="L90">        String sql = &quot;SELECT borrow_id, status, due_date FROM borrowings &quot; +</span>
+                     &quot;WHERE user_id = ? AND media_id = ? AND (status = 'borrowed' OR status = 'overdue')&quot;;
+
+<span class="fc" id="L93">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L94">            stmt.setInt(1, userId);</span>
+<span class="fc" id="L95">            stmt.setInt(2, mediaId);</span>
+<span class="fc" id="L96">            try (ResultSet rs = stmt.executeQuery()) {</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">                if (rs.next()) {</span>
+<span class="fc" id="L98">                    Borrowing b = new Borrowing();</span>
+<span class="fc" id="L99">                    b.setBorrowId(rs.getInt(&quot;borrow_id&quot;));</span>
+<span class="fc" id="L100">                    b.setStatus(rs.getString(&quot;status&quot;));</span>
+<span class="fc" id="L101">                    b.setDueDate(rs.getDate(&quot;due_date&quot;).toLocalDate());</span>
+<span class="fc" id="L102">                    b.setUserId(userId);</span>
+<span class="fc" id="L103">                    b.setMediaId(mediaId);</span>
+<span class="fc" id="L104">                    return b;</span>
+                }
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">            }</span>
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">        }</span>
+<span class="fc" id="L108">        return null;</span>
+    }
+
+    /**
+     * Returns the selected media item.
+     * If the borrowing is overdue, the fine must be paid first.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @param mediaId media identifier
+     * @return true if returned, false otherwise
+     * @throws Exception if a database problem occurs
+     */
+    public boolean returnMedia(Connection conn, int userId, int mediaId) throws Exception {
+<span class="fc" id="L122">        conn.setAutoCommit(false);</span>
+        try {
+<span class="fc" id="L124">            Borrowing borrowing = findActiveBorrowing(conn, userId, mediaId);</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">            if (borrowing == null) {</span>
+<span class="fc" id="L126">                System.out.println(&quot;No active borrowing found for this media.&quot;);</span>
+<span class="fc" id="L127">                return false;</span>
+            }
+
+<span class="fc bfc" id="L130" title="All 2 branches covered.">            if (borrowing.isOverdue()) {</span>
+<span class="fc" id="L131">                FineDAO fineDAO = new FineDAO();</span>
+<span class="fc" id="L132">                Boolean paid = fineDAO.isPaid(conn, borrowing.getBorrowId());</span>
+<span class="pc bpc" id="L133" title="1 of 4 branches missed.">                if (paid == null || !paid) {</span>
+<span class="fc" id="L134">                    System.out.println(&quot;Media is overdue and fine is unpaid.&quot;);</span>
+<span class="fc" id="L135">                    conn.rollback();</span>
+<span class="fc" id="L136">                    return false;</span>
+                }
+            }
+
+<span class="fc" id="L140">            String updateSql = &quot;UPDATE borrowings SET status = 'returned', return_date = CURRENT_DATE WHERE borrow_id = ?&quot;;</span>
+<span class="fc" id="L141">            try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {</span>
+<span class="fc" id="L142">                stmt.setInt(1, borrowing.getBorrowId());</span>
+<span class="fc" id="L143">                stmt.executeUpdate();</span>
+            }
+
+<span class="fc bfc" id="L146" title="All 2 branches covered.">            if (!mediaDAO.setMediaStatus(conn, mediaId, true)) {</span>
+<span class="fc" id="L147">                throw new SQLException(&quot;Failed to update media availability&quot;);</span>
+            }
+
+<span class="fc" id="L150">            conn.commit();</span>
+<span class="fc" id="L151">            return true;</span>
+<span class="fc" id="L152">        } catch (Exception e) {</span>
+<span class="fc" id="L153">            conn.rollback();</span>
+<span class="fc" id="L154">            throw e;</span>
+        }
+    }
+
+    /**
+     * Borrows the media and sets a due date based on its type.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @param mediaId media identifier
+     * @return true if borrowed, false otherwise
+     * @throws Exception if a database problem occurs
+     */
+    public boolean borrowMedia(Connection conn, int userId, int mediaId) throws Exception {
+<span class="fc" id="L168">        conn.setAutoCommit(false);</span>
+        try {
+<span class="fc" id="L170">            Media media = mediaDAO.findById(conn, mediaId);</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">            if (media == null) {</span>
+<span class="fc" id="L172">                System.out.println(&quot;Media not found.&quot;);</span>
+<span class="fc" id="L173">                return false;</span>
+            }
+<span class="fc bfc" id="L175" title="All 2 branches covered.">            if (!media.isAvailable()) {</span>
+<span class="fc" id="L176">                System.out.println(&quot;Media is already borrowed.&quot;);</span>
+<span class="fc" id="L177">                return false;</span>
+            }
+
+<span class="fc" id="L180">            int borrowDays = media.getBorrowDurationDays();</span>
+
+<span class="fc" id="L182">            String sql = &quot;INSERT INTO borrowings (user_id, media_id, borrow_date, due_date, status) &quot; +</span>
+                         &quot;VALUES (?, ?, CURRENT_DATE, CURRENT_DATE + INTERVAL '&quot; + borrowDays + &quot; days', 'borrowed')&quot;;
+
+<span class="fc" id="L185">            try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L186">                stmt.setInt(1, userId);</span>
+<span class="fc" id="L187">                stmt.setInt(2, mediaId);</span>
+<span class="fc" id="L188">                stmt.executeUpdate();</span>
+            }
+
+<span class="fc bfc" id="L191" title="All 2 branches covered.">            if (!mediaDAO.setMediaStatus(conn, mediaId, false)) {</span>
+<span class="fc" id="L192">                throw new SQLException(&quot;Failed to update media availability&quot;);</span>
+            }
+
+<span class="fc" id="L195">            conn.commit();</span>
+<span class="fc" id="L196">            return true;</span>
+<span class="fc" id="L197">        } catch (Exception e) {</span>
+<span class="fc" id="L198">            conn.rollback();</span>
+<span class="fc" id="L199">            throw e;</span>
+        }
+    }
+
+    /**
+     * Returns the borrowing linked to a specific fine.
+     *
+     * @param conn active database connection
+     * @param fineId fine identifier
+     * @return borrowing or null if not found
+     * @throws Exception if a database problem occurs
+     */
+    public Borrowing getFineBorrowing(Connection conn, int fineId) throws Exception {
+<span class="fc" id="L212">        String sql =</span>
+                &quot;SELECT * &quot; +
+                &quot;FROM borrowings b &quot; +
+                &quot;JOIN fines f ON b.borrow_id = f.borrow_id &quot; +
+                &quot;WHERE f.fine_id = ?&quot;;
+
+<span class="fc" id="L218">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L219">            stmt.setInt(1, fineId);</span>
+<span class="fc" id="L220">            try (ResultSet rs = stmt.executeQuery()) {</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">                if (rs.next()) {</span>
+<span class="fc" id="L222">                    Borrowing b = new Borrowing();</span>
+<span class="fc" id="L223">                    b.setBorrowId(rs.getInt(&quot;borrow_id&quot;));</span>
+<span class="fc" id="L224">                    b.setUserId(rs.getInt(&quot;user_id&quot;));</span>
+<span class="fc" id="L225">                    b.setMediaId(rs.getInt(&quot;media_id&quot;));</span>
+<span class="fc" id="L226">                    Date borrowDate = rs.getDate(&quot;borrow_date&quot;);</span>
+<span class="fc" id="L227">                    Date dueDate = rs.getDate(&quot;due_date&quot;);</span>
+<span class="fc" id="L228">                    Date returnDate = rs.getDate(&quot;return_date&quot;);</span>
+
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">                    if (borrowDate != null) b.setBorrowDate(borrowDate.toLocalDate());</span>
+<span class="pc bpc" id="L231" title="1 of 2 branches missed.">                    if (dueDate != null) b.setDueDate(dueDate.toLocalDate());</span>
+<span class="pc bpc" id="L232" title="1 of 2 branches missed.">                    if (returnDate != null) b.setReturnDate(returnDate.toLocalDate());</span>
+
+<span class="fc" id="L234">                    b.setStatus(rs.getString(&quot;status&quot;));</span>
+<span class="fc" id="L235">                    return b;</span>
+                }
+<span class="pc bpc" id="L237" title="1 of 2 branches missed.">            }</span>
+<span class="pc bpc" id="L238" title="1 of 2 branches missed.">        }</span>
+<span class="fc" id="L239">        return null;</span>
+    }
+
+    /**
+     * Updates the status of a borrowing.
+     *
+     * @param conn active database connection
+     * @param borrowingId borrowing identifier
+     * @param newStatus new status value
+     * @throws Exception if a database problem occurs
+     */
+    public void updateBorrowingStatus(Connection conn, int borrowingId, String newStatus) throws Exception {
+<span class="fc" id="L251">        String sql = &quot;UPDATE borrowings SET status = ? WHERE borrow_id = ?&quot;;</span>
+
+<span class="fc" id="L253">        try (PreparedStatement stmt = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L254">            stmt.setString(1, newStatus);</span>
+<span class="fc" id="L255">            stmt.setInt(2, borrowingId);</span>
+<span class="fc" id="L256">            stmt.executeUpdate();</span>
+        }
+<span class="fc" id="L258">    }</span>
+
+    /**
+     * Checks if the user has at least one overdue borrowing.
+     *
+     * @param conn active database connection
+     * @param userId user identifier
+     * @return true if user has an overdue borrowing
+     * @throws Exception if a database problem occurs
+     */
+    public boolean hasOverdueForUser(Connection conn, int userId) throws Exception {
+<span class="fc" id="L269">        String sql =</span>
+            &quot;SELECT 1 FROM borrowings &quot; +
+            &quot;WHERE user_id = ? AND (&quot; +
+            &quot;    (status = 'borrowed' AND due_date &lt; CURRENT_DATE) &quot; +
+            &quot;    OR status = 'overdue'&quot; +
+            &quot;) LIMIT 1&quot;;
+
+<span class="fc" id="L276">        try (PreparedStatement ps = conn.prepareStatement(sql)) {</span>
+<span class="fc" id="L277">            ps.setInt(1, userId);</span>
+<span class="fc" id="L278">            try (ResultSet rs = ps.executeQuery()) {</span>
+<span class="fc" id="L279">                return rs.next();</span>
+            }
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

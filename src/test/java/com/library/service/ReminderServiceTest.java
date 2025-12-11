@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -75,5 +76,96 @@ class ReminderServiceTest {
         verify(emailServer, times(1))
                 .send("u2@example.com", "Overdue Reminder", "You have 1 overdue book(s).");
         verifyNoMoreInteractions(emailServer);
+    }
+
+    /**
+     * Tests that an empty or null list returns an empty map and sends no emails.
+     *
+     * @throws Exception if DAO calls fail
+     */
+    @Test
+    void returnsEmptyMapWhenNoOverdueBorrowings() throws Exception {
+        Connection conn = null;
+
+        BorrowingDAO borrowingDAO = mock(BorrowingDAO.class);
+        UserDAO userDAO = mock(UserDAO.class);
+        EmailServer emailServer = mock(EmailServer.class);
+
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(null);
+
+        ReminderService service =
+                new ReminderService(conn, borrowingDAO, userDAO, new EmailNotifier(emailServer));
+
+        Map<Integer, Integer> counts = service.sendOverdueReminders();
+
+        assertTrue(counts.isEmpty());
+        verifyNoInteractions(emailServer);
+        verifyNoInteractions(userDAO);
+    }
+
+    /**
+     * Tests that non-overdue borrowings are ignored.
+     *
+     * @throws Exception if DAO calls fail
+     */
+    @Test
+    void nonOverdueBorrowingsAreIgnored() throws Exception {
+        Connection conn = null;
+
+        BorrowingDAO borrowingDAO = mock(BorrowingDAO.class);
+        UserDAO userDAO = mock(UserDAO.class);
+        EmailServer emailServer = mock(EmailServer.class);
+
+        Borrowing b = new Borrowing();
+        b.setUserId(1);
+        b.setStatus("borrowed");
+        b.setDueDate(LocalDate.now().plusDays(1));
+
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(Collections.singletonList(b));
+
+        ReminderService service =
+                new ReminderService(conn, borrowingDAO, userDAO, new EmailNotifier(emailServer));
+
+        Map<Integer, Integer> counts = service.sendOverdueReminders();
+
+        assertTrue(counts.isEmpty());
+        verifyNoInteractions(emailServer);
+        verifyNoInteractions(userDAO);
+    }
+
+    /**
+     * Tests that overdue items with null dueDate but status=overdue are counted.
+     *
+     * @throws Exception if DAO calls fail
+     */
+    @Test
+    void overdueStatusWithNullDueDateStillCounts() throws Exception {
+        Connection conn = null;
+
+        BorrowingDAO borrowingDAO = mock(BorrowingDAO.class);
+        UserDAO userDAO = mock(UserDAO.class);
+        EmailServer emailServer = mock(EmailServer.class);
+
+        Borrowing b = new Borrowing();
+        b.setUserId(3);
+        b.setStatus("overdue");
+        b.setDueDate(null);
+
+        when(borrowingDAO.findOverdueMedia(conn)).thenReturn(Collections.singletonList(b));
+
+        User u = new User();
+        u.setUserId(3);
+        u.setEmail("u3@example.com");
+        when(userDAO.findById(conn, 3)).thenReturn(u);
+
+        ReminderService service =
+                new ReminderService(conn, borrowingDAO, userDAO, new EmailNotifier(emailServer));
+
+        Map<Integer, Integer> counts = service.sendOverdueReminders();
+
+        assertEquals(1, counts.get(3).intValue());
+        verify(emailServer).send("u3@example.com",
+                "Overdue Reminder",
+                "You have 1 overdue book(s).");
     }
 }

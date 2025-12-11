@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FineCalculator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.service</a> &gt; <span class="el_source">FineCalculator.java</span></div><h1>FineCalculator.java</h1><pre class="source lang-java linenums">package com.library.service;
+
+import com.library.strategy.*;
+
+/**
+ * Calculates fines using a selected fine strategy.
+ * The strategy decides how the fine is computed.
+ */
+public class FineCalculator {
+
+    private FineStrategy fineStrategy;
+
+    /**
+     * Creates a calculator with an initial strategy.
+     *
+     * @param fineStrategy strategy used for fine calculation
+     */
+<span class="fc" id="L18">    public FineCalculator(FineStrategy fineStrategy) {</span>
+<span class="fc" id="L19">        this.fineStrategy = fineStrategy;</span>
+<span class="fc" id="L20">    }</span>
+
+    /**
+     * Computes the fine based on the number of overdue days.
+     *
+     * @param overdueDays number of days overdue
+     * @return fine amount
+     */
+    public int calculateFine(int overdueDays) {
+<span class="fc" id="L29">        return fineStrategy.calculateFine(overdueDays);</span>
+    }
+
+    /**
+     * Changes the strategy used for fine calculation.
+     *
+     * @param fineStrategy new strategy
+     */
+    public void setFineStrategy(FineStrategy fineStrategy) {
+<span class="nc" id="L38">        this.fineStrategy = fineStrategy;</span>
+<span class="nc" id="L39">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

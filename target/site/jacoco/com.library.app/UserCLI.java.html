@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserCLI.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.app</a> &gt; <span class="el_source">UserCLI.java</span></div><h1>UserCLI.java</h1><pre class="source lang-java linenums">package com.library.app;
+
+import com.library.model.Borrowing;
+import com.library.model.Fine;
+import com.library.model.Media;
+import com.library.service.FineSummary;
+import com.library.service.UserService;
+import com.library.util.DisplayPrinter;
+
+import java.util.List;
+import java.util.Scanner;
+
+/**
+ * Command-line menu for normal users.
+ */
+public class UserCLI {
+    private final Scanner in;
+    private final UserService user;
+
+    /**
+     * Builds a user menu handler.
+     *
+     * @param in   console scanner
+     * @param user user service to use
+     */
+<span class="fc" id="L26">    public UserCLI(Scanner in, UserService user) {</span>
+<span class="fc" id="L27">        this.in = in;</span>
+<span class="fc" id="L28">        this.user = user;</span>
+<span class="fc" id="L29">    }</span>
+
+    /**
+     * Shows the user menu and handles choices until logout.
+     */
+    public void run() {
+        while (true) {
+<span class="fc" id="L36">            MenuPrinter.clear();</span>
+<span class="fc" id="L37">            MenuPrinter.banner(&quot;User Menu&quot;);</span>
+<span class="fc" id="L38">            System.out.println(&quot;1) Search Media&quot;);</span>
+<span class="fc" id="L39">            System.out.println(&quot;2) Borrow Media&quot;);</span>
+<span class="fc" id="L40">            System.out.println(&quot;3) Return Media&quot;);</span>
+<span class="fc" id="L41">            System.out.println(&quot;4) View Fine Summary&quot;);</span>
+<span class="fc" id="L42">            System.out.println(&quot;5) Pay Fine&quot;);</span>
+<span class="fc" id="L43">            System.out.println(&quot;0) Logout&quot;);</span>
+
+<span class="fc" id="L45">            int choice = InputHelper.readInt(in, &quot;Choose: &quot;, 0, 5);</span>
+            try {
+<span class="pc bpc" id="L47" title="1 of 7 branches missed.">                switch (choice) {</span>
+                    case 1:
+<span class="fc" id="L49">                        searchMediaFlow();</span>
+<span class="fc" id="L50">                        break;</span>
+                    case 2:
+<span class="fc" id="L52">                        borrowMediaFlow();</span>
+<span class="fc" id="L53">                        break;</span>
+                    case 3:
+<span class="fc" id="L55">                        returnMediaFlow();</span>
+<span class="fc" id="L56">                        break;</span>
+                    case 4:
+<span class="fc" id="L58">                        showFineSummary();</span>
+<span class="fc" id="L59">                        break;</span>
+                    case 5:
+<span class="fc" id="L61">                        payFinesFlow();</span>
+<span class="fc" id="L62">                        break;</span>
+                    case 0:
+<span class="fc" id="L64">                        return;</span>
+                    default:
+                        break;
+                }
+<span class="fc" id="L68">            } catch (Exception e) {</span>
+<span class="fc" id="L69">                System.out.println(&quot;Operation failed: &quot; + e.getMessage());</span>
+<span class="fc" id="L70">                InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L71">            }</span>
+<span class="fc" id="L72">        }</span>
+    }
+
+    /**
+     * Reads search input and prints matching media.
+     *
+     * @throws Exception if a service error happens
+     */
+    private void searchMediaFlow() throws Exception {
+<span class="fc" id="L81">        MenuPrinter.title(&quot;Search Media&quot;);</span>
+<span class="fc" id="L82">        String type = InputHelper.readNonEmpty(in, &quot;Media Type (book/cd/journal/media): &quot;);</span>
+<span class="fc" id="L83">        String keyword = InputHelper.readNonEmpty(in, &quot;Keyword: &quot;);</span>
+<span class="fc" id="L84">        List&lt;Media&gt; results = user.searchMedia(keyword, type);</span>
+<span class="fc" id="L85">        DisplayPrinter.printMediaList(results);</span>
+<span class="fc" id="L86">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L87">    }</span>
+
+    /**
+     * Reads a media id and tries to borrow it for the user.
+     *
+     * @throws Exception if a service error happens
+     */
+    private void borrowMediaFlow() throws Exception {
+<span class="fc" id="L95">        MenuPrinter.title(&quot;Borrow Media&quot;);</span>
+<span class="fc" id="L96">        int mediaId = InputHelper.readInt(in, &quot;Media ID: &quot;, 1, Integer.MAX_VALUE);</span>
+<span class="fc" id="L97">        boolean ok = user.borrowMedia(mediaId);</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        System.out.println(ok ? &quot;Borrowed successfully.&quot; : &quot;Could not borrow.&quot;);</span>
+<span class="fc" id="L99">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L100">    }</span>
+
+    /**
+     * Shows borrowed media and lets the user choose one to return.
+     *
+     * @throws Exception if a service error happens
+     */
+    private void returnMediaFlow() throws Exception {
+<span class="fc" id="L108">        MenuPrinter.title(&quot;Return Media ----\n---- Borrowed Media&quot;);</span>
+<span class="fc" id="L109">        List&lt;Borrowing&gt; borrowings = user.findBorrowings(user.getLoggedUser().getUserId());</span>
+<span class="fc" id="L110">        DisplayPrinter.printBorrowedMedia(user.getUserConnection(), borrowings);</span>
+<span class="fc" id="L111">        int mediaId = InputHelper.readInt(in, &quot;Media ID: &quot;, 1, Integer.MAX_VALUE);</span>
+<span class="fc" id="L112">        boolean ok = user.returnMedia(mediaId);</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        System.out.println(ok ? &quot;Returned successfully.&quot; : &quot;Could not return.&quot;);</span>
+<span class="fc" id="L114">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L115">    }</span>
+
+    /**
+     * Shows the current fine summary for the logged-in user.
+     */
+    private void showFineSummary() {
+        try {
+<span class="fc" id="L122">            FineSummary summary = user.getFineSummary();</span>
+<span class="fc" id="L123">            com.library.util.DisplayPrinter.printFineSummary(summary);</span>
+<span class="fc" id="L124">        } catch (Exception e) {</span>
+<span class="fc" id="L125">            System.out.println(&quot;Failed to load fine summary: &quot; + e.getMessage());</span>
+<span class="fc" id="L126">        }</span>
+<span class="fc" id="L127">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L128">    }</span>
+
+    /**
+     * Reads fine payment details and tries to pay the fine.
+     *
+     * @throws Exception if a service error happens
+     */
+    private void payFinesFlow() throws Exception {
+<span class="fc" id="L136">        MenuPrinter.title(&quot;Pay Fine&quot;);</span>
+<span class="fc" id="L137">        List&lt;Fine&gt; fines = user.findFines(user.getLoggedUser().getUserId());</span>
+<span class="fc" id="L138">        DisplayPrinter.printFines(fines);</span>
+<span class="fc" id="L139">        int fineId = InputHelper.readInt(in, &quot;Fine ID: &quot;, 1, Integer.MAX_VALUE);</span>
+<span class="fc" id="L140">        double amount = InputHelper.readDouble(in, &quot;Amount: &quot;, 0.01, 1_000_000);</span>
+<span class="fc" id="L141">        boolean ok = user.payFine(fineId, amount);</span>
+<span class="fc bfc" id="L142" title="All 2 branches covered.">        System.out.println(ok ? &quot;Paid.&quot; : &quot;Payment failed.&quot;);</span>
+<span class="fc" id="L143">        InputHelper.pressEnterToContinue(in);</span>
+<span class="fc" id="L144">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

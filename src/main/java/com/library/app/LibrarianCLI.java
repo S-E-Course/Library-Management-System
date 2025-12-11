@@ -25,7 +25,8 @@ public class LibrarianCLI {
      * Runs the menu until the librarian logs out.
      */
     public void run() {
-        while (true) {
+        boolean running = true;
+        while (running) {
             MenuPrinter.clear();
             MenuPrinter.banner("Librarian Menu");
             System.out.println("1) Detect Overdue & Issue Fines");
@@ -33,14 +34,11 @@ public class LibrarianCLI {
 
             int choice = InputHelper.readInt(in, "Choose: ", 0, 1);
             try {
-                switch (choice) {
-                    case 1:
-                        detectOverdueFlow();
-                        break;
-                    case 0:
-                        return;
-                    default:
-                        break;
+                if (choice == 1) {
+                    detectOverdueFlow();
+                } else {
+                    // choice == 0 (the only other valid option)
+                    running = false;
                 }
             } catch (Exception e) {
                 System.out.println("Operation failed: " + e.getMessage());

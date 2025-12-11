@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Borrowing.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.model</a> &gt; <span class="el_source">Borrowing.java</span></div><h1>Borrowing.java</h1><pre class="source lang-java linenums">package com.library.model;
+
+import java.time.LocalDate;
+
+/**
+ * Represents a borrowing record for a user and a media item.
+ * Stores dates and the current status.
+ */
+<span class="fc" id="L9">public class Borrowing {</span>
+    private int borrowId;
+    private int userId;
+    private int mediaId;
+    private LocalDate borrowDate;
+    private LocalDate dueDate;
+    private LocalDate returnDate;
+    private String status;
+
+    /** @return borrowing identifier */
+<span class="fc" id="L19">    public int getBorrowId() { return borrowId; }</span>
+
+    /** @param borrowId borrowing identifier */
+<span class="fc" id="L22">    public void setBorrowId(int borrowId) { this.borrowId = borrowId; }</span>
+
+    /** @return user identifier */
+<span class="fc" id="L25">    public int getUserId() { return userId; }</span>
+
+    /** @param userId user identifier */
+<span class="fc" id="L28">    public void setUserId(int userId) { this.userId = userId; }</span>
+
+    /** @return media identifier */
+<span class="fc" id="L31">    public int getMediaId() { return mediaId; }</span>
+
+    /** @param mediaId media identifier */
+<span class="fc" id="L34">    public void setMediaId(int mediaId) { this.mediaId = mediaId; }</span>
+
+    /** @return borrow date */
+<span class="fc" id="L37">    public LocalDate getBorrowDate() { return borrowDate; }</span>
+
+    /** @param borrowDate borrow date */
+<span class="fc" id="L40">    public void setBorrowDate(LocalDate borrowDate) { this.borrowDate = borrowDate; }</span>
+
+    /** @return due date */
+<span class="fc" id="L43">    public LocalDate getDueDate() { return dueDate; }</span>
+
+    /** @param dueDate due date */
+<span class="fc" id="L46">    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }</span>
+
+    /** @return return date or null */
+<span class="fc" id="L49">    public LocalDate getReturnDate() { return returnDate; }</span>
+
+    /** @param returnDate return date or null */
+<span class="fc" id="L52">    public void setReturnDate(LocalDate returnDate) { this.returnDate = returnDate; }</span>
+
+    /** @return status string */
+<span class="fc" id="L55">    public String getStatus() { return status; }</span>
+
+    /** @param status status string */
+<span class="fc" id="L58">    public void setStatus(String status) { this.status = status; }</span>
+
+    /**
+     * Checks if the item is overdue.
+     *
+     * @return true if overdue
+     */
+    public boolean isOverdue() {
+<span class="fc bfc" id="L66" title="All 6 branches covered.">        return returnDate == null &amp;&amp; dueDate != null &amp;&amp; dueDate.isBefore(LocalDate.now());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

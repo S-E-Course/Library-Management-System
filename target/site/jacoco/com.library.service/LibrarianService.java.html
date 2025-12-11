@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LibrarianService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Library Management System</a> &gt; <a href="index.source.html" class="el_package">com.library.service</a> &gt; <span class="el_source">LibrarianService.java</span></div><h1>LibrarianService.java</h1><pre class="source lang-java linenums">package com.library.service;
+
+import com.library.dao.*;
+import com.library.model.*;
+import com.library.strategy.*;
+import com.library.util.DatabaseConnection;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+/**
+ * Service for librarian actions such as:
+ * - login/logout
+ * - detecting overdue media
+ * - issuing fines using Strategy Pattern
+ */
+public class LibrarianService {
+    private final Connection conn;
+<span class="fc" id="L22">    private final BorrowingDAO borrowingDAO = new BorrowingDAO();</span>
+<span class="fc" id="L23">    private final FineDAO fineDAO = new FineDAO();</span>
+<span class="fc" id="L24">    private final UserDAO userDAO = new UserDAO();</span>
+<span class="fc" id="L25">    private final MediaDAO mediaDAO = new MediaDAO();</span>
+    private User loggedLibrarian;
+
+    /**
+     * Establishes a database connection for librarian operations.
+     *
+     * @throws Exception if connecting to the database fails
+     */
+<span class="fc" id="L33">    public LibrarianService() throws Exception {</span>
+<span class="fc" id="L34">        this.conn = DatabaseConnection.connect();</span>
+<span class="fc" id="L35">    }</span>
+
+    /**
+     * Authenticates a librarian by username and password hash.
+     *
+     * @param username     librarian username
+     * @param passwordHash hashed password
+     * @return true if credentials are valid
+     * @throws Exception if a data access error occurs
+     */
+    public boolean login(String username, String passwordHash) throws Exception {
+<span class="fc" id="L46">        User librarian = userDAO.findByUsername(conn, username);</span>
+<span class="fc bfc" id="L47" title="All 4 branches covered.">        if (librarian != null &amp;&amp; librarian.getPasswordHash().equals(passwordHash)) {</span>
+<span class="fc" id="L48">            loggedLibrarian = librarian;</span>
+<span class="fc" id="L49">            return true;</span>
+        }
+<span class="fc" id="L51">        return false;</span>
+    }
+
+    /**
+     * Logs out the current librarian and closes the shared database connection.
+     *
+     * @throws SQLException if disconnect fails
+     */
+    public void logout() throws SQLException {
+<span class="fc" id="L60">        loggedLibrarian = null;</span>
+<span class="fc" id="L61">        DatabaseConnection.disconnect();</span>
+<span class="fc" id="L62">    }</span>
+
+    /**
+     * Detects overdue media and automatically issues or updates fines.
+     * Applies the appropriate fine strategy per media type.
+     *
+     * @throws Exception if reading or writing database records fails
+     */
+    public void detectOverdueMedia() throws Exception {
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (loggedLibrarian == null)</span>
+<span class="fc" id="L72">            throw new IllegalStateException(&quot;Librarian not logged in&quot;);</span>
+
+<span class="fc" id="L74">        List&lt;Borrowing&gt; overdueList = borrowingDAO.findOverdueMedia(conn);</span>
+<span class="fc bfc" id="L75" title="All 4 branches covered.">        if (overdueList == null || overdueList.isEmpty()) {</span>
+<span class="fc" id="L76">            System.out.println(&quot;No overdue borrowings found.&quot;);</span>
+<span class="fc" id="L77">            return;</span>
+        }
+
+<span class="fc" id="L80">        LocalDate today = LocalDate.now();</span>
+
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        for (Borrowing b : overdueList) {</span>
+
+<span class="fc bfc" id="L84" title="All 2 branches covered.">            if (&quot;overdue&quot;.equalsIgnoreCase(b.getStatus())) {</span>
+<span class="fc" id="L85">                Fine existingFine = fineDAO.getBorrowingFine(conn, b.getBorrowId());</span>
+<span class="pc bpc" id="L86" title="2 of 4 branches missed.">                if (existingFine != null &amp;&amp; existingFine.getFineDate() != null) {</span>
+
+<span class="fc" id="L88">                    long daysSinceLastFine = ChronoUnit.DAYS.between(existingFine.getFineDate(), today);</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">                    if (daysSinceLastFine &lt; 1) continue;</span>
+
+<span class="fc" id="L91">                    fineDAO.updateFineBalance(conn, existingFine.getId(), (int) daysSinceLastFine);</span>
+<span class="fc" id="L92">                    fineDAO.updateFineDate(conn, existingFine.getId());</span>
+<span class="fc" id="L93">                    userDAO.updateUserBalance(conn, b.getUserId(), daysSinceLastFine);</span>
+
+<span class="fc" id="L95">                    System.out.printf(</span>
+                        &quot;Fine's amount updated for borrowId=%d (amount + %d NIS)%n&quot;,
+<span class="fc" id="L97">                        b.getBorrowId(), daysSinceLastFine</span>
+                    );
+<span class="fc" id="L99">                    continue;</span>
+                }
+            }
+
+<span class="fc" id="L103">            Media media = mediaDAO.findById(conn, b.getMediaId());</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">            if (media == null) continue;</span>
+
+<span class="fc" id="L106">            long overdueDays = ChronoUnit.DAYS.between(b.getDueDate(), today);</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">            if (overdueDays &lt;= 0) continue;</span>
+
+            FineCalculator fineCalculator;
+<span class="fc bfc" id="L110" title="All 3 branches covered.">            switch (media.getType().toLowerCase()) {</span>
+                case &quot;cd&quot;:
+<span class="fc" id="L112">                    fineCalculator = new FineCalculator(new CDFineStrategy());</span>
+<span class="fc" id="L113">                    break;</span>
+                case &quot;journal&quot;:
+<span class="fc" id="L115">                    fineCalculator = new FineCalculator(new JournalFineStrategy());</span>
+<span class="fc" id="L116">                    break;</span>
+                default:
+<span class="fc" id="L118">                    fineCalculator = new FineCalculator(new BookFineStrategy());</span>
+                    break;
+            }
+
+<span class="fc" id="L122">            double fineAmount = fineCalculator.calculateFine((int) overdueDays);</span>
+<span class="fc" id="L123">            boolean issued = fineDAO.issueFine(conn, b.getBorrowId(), b.getUserId(), fineAmount);</span>
+
+<span class="fc bfc" id="L125" title="All 2 branches covered.">            if (issued) {</span>
+<span class="fc" id="L126">                borrowingDAO.updateBorrowingStatus(conn, b.getBorrowId(), &quot;overdue&quot;);</span>
+<span class="fc" id="L127">                userDAO.updateUserBalance(conn, b.getUserId(), fineAmount);</span>
+<span class="fc" id="L128">                System.out.printf(</span>
+                    &quot;Issued new fine %.2f for borrowId=%d (overdue %d days)%n&quot;,
+<span class="fc" id="L130">                    fineAmount, b.getBorrowId(), overdueDays</span>
+                );
+            } else {
+<span class="fc" id="L133">                System.out.printf(&quot;Failed to issue fine for borrowId=%d%n&quot;, b.getBorrowId());</span>
+            }
+<span class="fc" id="L135">        }</span>
+<span class="fc" id="L136">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
