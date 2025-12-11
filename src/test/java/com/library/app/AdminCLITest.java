@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.*;
 
 /**
@@ -36,7 +37,7 @@ public class AdminCLITest {
         when(admin.addMedia(any(Media.class))).thenReturn(true);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).addMedia(any(Media.class));
     }
@@ -61,7 +62,7 @@ public class AdminCLITest {
         when(admin.addMedia(any(Media.class))).thenReturn(true);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).addMedia(any(Media.class));
     }
@@ -86,7 +87,7 @@ public class AdminCLITest {
         when(admin.addMedia(any(Media.class))).thenReturn(true);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).addMedia(any(Media.class));
     }
@@ -109,7 +110,7 @@ public class AdminCLITest {
         when(admin.listAllMedia("media")).thenReturn(list);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).listAllMedia("media");
     }
@@ -131,7 +132,7 @@ public class AdminCLITest {
         when(admin.removeMedia(5)).thenReturn(true);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).removeMedia(5);
     }
@@ -153,7 +154,7 @@ public class AdminCLITest {
         when(admin.removeMedia(5)).thenReturn(false);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).removeMedia(5);
     }
@@ -179,7 +180,7 @@ public class AdminCLITest {
                 .thenReturn(true);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).addUser("user1", "user1@example.com", "pass123", "user");
     }
@@ -205,7 +206,7 @@ public class AdminCLITest {
                 .thenReturn(false);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).addUser("userx", "userx@example.com", "pass123", "user");
     }
@@ -229,7 +230,7 @@ public class AdminCLITest {
         AdminService admin = mock(AdminService.class);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin, never()).addUser(anyString(), anyString(), anyString(), anyString());
     }
@@ -253,7 +254,7 @@ public class AdminCLITest {
         AdminService admin = mock(AdminService.class);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin, never()).addUser(anyString(), anyString(), anyString(), anyString());
     }
@@ -275,7 +276,7 @@ public class AdminCLITest {
         when(admin.listUsers()).thenReturn(users);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).listUsers();
     }
@@ -306,7 +307,7 @@ public class AdminCLITest {
         when(admin.listUsers()).thenReturn(users);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).listUsers();
     }
@@ -328,7 +329,7 @@ public class AdminCLITest {
         when(admin.removeUser(9)).thenReturn(true);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).removeUser(9);
     }
@@ -350,7 +351,7 @@ public class AdminCLITest {
         when(admin.removeUser(9)).thenReturn(false);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).removeUser(9);
     }
@@ -362,19 +363,19 @@ public class AdminCLITest {
      */
     @Test
     public void testSendRemindersFlowCallsService() throws Exception {
-        String input =
-                "7\n" +
-                "\n" +
-                "0\n";
+        String input = "7\n\n0\n";
+
         Scanner scanner = new Scanner(input);
         AdminService admin = mock(AdminService.class);
         when(admin.sendOverdueRemindersFromEnv()).thenReturn(2);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).sendOverdueRemindersFromEnv();
     }
+
 
     /**
      * Run with choice 0 only to cover direct logout branch.
@@ -388,7 +389,7 @@ public class AdminCLITest {
         AdminService admin = mock(AdminService.class);
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         // No specific interaction required, just covering branch 0.
     }
@@ -413,7 +414,7 @@ public class AdminCLITest {
         when(admin.addMedia(any(Media.class))).thenThrow(new RuntimeException("boom"));
 
         AdminCLI cli = new AdminCLI(scanner, admin);
-        cli.run();
+        assertDoesNotThrow(() -> cli.run());
 
         verify(admin).addMedia(any(Media.class));
     }
