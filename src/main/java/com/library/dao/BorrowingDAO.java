@@ -6,6 +6,7 @@ import com.library.model.Media;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
 
 /**
  * Handles borrowing and returning of media.
@@ -178,13 +179,19 @@ public class BorrowingDAO {
             }
 
             int borrowDays = media.getBorrowDurationDays();
+            
+            LocalDate borrowDate = LocalDate.now();
+            LocalDate dueDate = borrowDate.plusDays(borrowDays);
 
-            String sql = "INSERT INTO borrowings (user_id, media_id, borrow_date, due_date, status) " +
-                         "VALUES (?, ?, CURRENT_DATE, CURRENT_DATE + INTERVAL '" + borrowDays + " days', 'borrowed')";
+            String sql =
+                    "INSERT INTO borrowings (user_id, media_id, borrow_date, due_date, status) " +
+                    "VALUES (?, ?, ?, ?, 'borrowed')";
 
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, userId);
                 stmt.setInt(2, mediaId);
+                stmt.setDate(3, Date.valueOf(borrowDate));
+                stmt.setDate(4, Date.valueOf(dueDate));
                 stmt.executeUpdate();
             }
 
