@@ -21,15 +21,22 @@ public class Main {
      * @param args command line arguments
      */
     public static void main(String[] args) {
+        boolean running = true;
+
         try {
             DatabaseConnection.connect();
             Scanner in = new Scanner(System.in);
 
-            while (true) {
+            while (running) {
                 MenuPrinter.clear();
                 MenuPrinter.banner("Library Management System - Login");
 
-                String username = InputHelper.readNonEmpty(in, "Username: ");
+                String username = InputHelper.readNonEmpty(in, "Username (or 'q' to quit): ");
+                if ("q".equalsIgnoreCase(username) || "quit".equalsIgnoreCase(username)) {
+                    System.out.println("Goodbye!");
+                    break;
+                }
+
                 String password = InputHelper.readPassword(in, "Password: ");
 
                 AuthService auth = new AuthService();
@@ -68,9 +75,13 @@ public class Main {
             System.err.println("Fatal error: " + t.getMessage());
             t.printStackTrace();
         } finally {
-            try { DatabaseConnection.disconnect(); } catch (Exception ignore) {}
+            try {
+                DatabaseConnection.disconnect();
+            } catch (Exception ignore) {}
         }
     }
+
+
 
     /**
      * Starts the admin session and shows the admin menu.
