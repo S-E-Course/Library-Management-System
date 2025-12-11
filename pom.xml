@@ -59,6 +59,10 @@
 
         <sonar.organization>s-e-course</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.coverage.exclusions>
+        src/main/java/com/library/app/Main.java,
+        src/main/java/com/library/util/DatabaseConnection.java
+    </sonar.coverage.exclusions>
     </properties>
 
     <build>
